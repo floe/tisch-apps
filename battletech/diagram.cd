@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="gamefield" Collapsed="true">
+    <Position X="16.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>kAABAAEAAAAkAAARAAIAAUAgAAAgEQAQAAAAQAAAAAA=</HashCode>
+      <FileName>gamefield.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="gametile" Collapsed="true">
+    <Position X="18.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAJQACAAAAAAEAQAYAIAIBkAAAABAgAgAABAAAAAAAA=</HashCode>
+      <FileName>gametile.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="textures" Collapsed="true">
+    <Position X="18.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAhAAEERAAoCAAAAAAgAEAgCgAIAAAAAACAASAA=</HashCode>
+      <FileName>textures.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="unit" Collapsed="true">
+    <Position X="0.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAABACAAAwEAAAAIAAAAAABAEEAAAgAAAAAAIgBgA=</HashCode>
+      <FileName>unit.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="weapon" Collapsed="true">
+    <Position X="18.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAgAAAAAAACAACCAAFAAgAAgABIAAgAgA=</HashCode>
+      <FileName>unit.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="mech" Collapsed="true">
+    <Position X="0.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAYAAgQAIAAAAAAAAAAQCAAIAHgBgBAEAAAAEAAAAAA=</HashCode>
+      <FileName>unit.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="unitSelectionMenu" Collapsed="true">
+    <Position X="12.25" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAEAAIQAAAAAAAAAABAAAAoAgAAAAAAAAEAAA=</HashCode>
+      <FileName>unitSelectionMenu.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="mainMenu" Collapsed="true">
+    <Position X="10" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAEAgAAAAAAAAAAAA=</HashCode>
+      <FileName>mainMenu.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="menu" Collapsed="true">
+    <Position X="6.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAEgAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>menu.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="menubutton" Collapsed="true">
+    <Position X="14.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAACAAAAAAAAAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>menubutton.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="player" Collapsed="true">
+    <Position X="16.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACABAAgAAAAIAAAAAAAAAAQAAEBAAAAACAAAAA=</HashCode>
+      <FileName>player.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="unitDataContainer" Collapsed="true">
+    <Position X="14.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAA=</HashCode>
+      <FileName>unitDataContainer.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="playerMenu" Collapsed="true">
+    <Position X="5.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAIQAAAAAAAAAAAAAABAAAAAAACBAAAAIQ=</HashCode>
+      <FileName>playerMenu.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="unitListMenu" Collapsed="true">
+    <Position X="7.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAQgACAUAAAAAAAkAIAAAAAAAAAFAEAAAAAIAAAAAA=</HashCode>
+      <FileName>unitListMenu.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="infoMenu" Collapsed="true">
+    <Position X="1" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>infoMenu.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="engine" Collapsed="true">
+    <Position X="10" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AICAAAQIABgBCQAB4ABAIAAgAACAIwCCYAQAABQAAIQ=</HashCode>
+      <FileName>engine.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="warningMenu" Collapsed="true">
+    <Position X="3.25" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAEABAAAAAAIAAACAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>warningMenu.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="unittile" Collapsed="true">
+    <Position X="16.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAAAAAAAIAAAAAAAAAAAAgEAQAAAAAAAA=</HashCode>
+      <FileName>unittile.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

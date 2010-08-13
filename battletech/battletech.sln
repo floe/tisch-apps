@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "battletech", "battletech.vcproj", "{F10B3B7B-9F10-41FF-9749-193851B693D2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A087670F-BA6A-4348-B2C2-D2771710F4A4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F10B3B7B-9F10-41FF-9749-193851B693D2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F10B3B7B-9F10-41FF-9749-193851B693D2}.Debug|Win32.Build.0 = Debug|Win32
+		{F10B3B7B-9F10-41FF-9749-193851B693D2}.Release|Win32.ActiveCfg = Release|Win32
+		{F10B3B7B-9F10-41FF-9749-193851B693D2}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

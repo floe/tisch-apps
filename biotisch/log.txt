@@ -1,0 +1,7 @@
+Taq Reaction Buffer, 10X, 5ul, 1X
+Nucleotide Solution Mix (dNTPs), 10mM, 1ul, 200uM
+Upstream Primer, 10uM, 1ul, 0.2uM
+Downstream Primer, 10uM, 1ul, 0.2uM
+DNA Template, ?, ?, 0.1-1ng/ml (plasmid DNA) 1-10ug/ml (genomic DNA)
+Taq Polymerase, 5u/ul, 0.25ul, 1.25u
+Water, 1X, to 50ul, 1X
