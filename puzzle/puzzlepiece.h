@@ -19,7 +19,7 @@ mail: dippona@in.tum.de
 class puzzlepiece: public Container
 {
 public:
-	puzzlepiece( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF);
+	puzzlepiece( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x07);
 
 	void action(Gesture* gesture);
 	void checkforsnap();

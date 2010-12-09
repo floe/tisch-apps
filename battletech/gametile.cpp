@@ -67,11 +67,11 @@ gametile::gametile(float x, float y, float w, float h, int _type, int xCoord, in
 	points[4][0] = centerX - width; points[4][1] = centerY - 0.5 * height;
 	points[5][0] = centerX - width; points[5][1] = centerY + 0.5 * height;
 
-	Gesture shadow( "shadow" );
+	Gesture shadow( "shadow"/*, GESTURE_FLAGS_ONESHOT*/ );
 	BlobDim* bdim = new BlobDim(1<<INPUT_TYPE_SHADOW);
 	std::vector<Dimensions> d;
 	Dimensions* dim = new Dimensions();
-	dim->x1 = 0; dim->x2 = 0; dim->y1 = 0; dim->y2 = 0; dim->size = 50;
+	dim->x1 = -1000; dim->x2 = -1000; dim->y1 = -1000; dim->y2 = -1000; dim->size = 0;
 	d.push_back(*dim);
 	Dimensions* dim2 = new Dimensions();
 	dim2->x1 = 1000; dim2->x2 = 1000; dim2->y1 = 1000; dim2->y2 = 1000; dim2->size = 10000;
@@ -224,7 +224,10 @@ void gametile::tap(Vector pos, int id)
 void gametile::action(Gesture *gesture)
 {
 	if (gesture->name() == "shadow")
+	{
+		std::cout << "shadow input" << std::endl;
 		this->tap(0,0);
+	}
 	else
 		Tile::action(gesture);
 }

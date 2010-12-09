@@ -253,7 +253,7 @@ class SudokuTile: public Tile {
 
 	public:
 
-	SudokuTile( RGBATexture* tex, int w, int h, int x, int y ): Tile(w,h,x,y,0,tex,TISCH_TILE_MOVE|TISCH_TILE_ROTATE) {
+	SudokuTile( RGBATexture* tex, int w, int h, int x, int y ): Tile(w,h,x,y,0,tex,TISCH_TILE_MOVE|TISCH_TILE_ROTATE/*|TISCH_TILE_SLIDE|TISCH_TILE_BOUNCE*/) {
 		snap = 1; lock = 0; tx = ty = 0; 
 	}
 

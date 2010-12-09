@@ -29,7 +29,7 @@ int main( int argc, char* argv[] ) {
 			(int)(((double)random()/(double)RAND_MAX)*600-300),
 			(int)(((double)random()/(double)RAND_MAX)*450-225),
 			/*(int)(((double)random()/(double)RAND_MAX)*360)*/0,
-			tmp, 0xFF
+			tmp, 0x07
 		);
 		puzzlepieces.push_back(foo);
 		win->add( foo );
