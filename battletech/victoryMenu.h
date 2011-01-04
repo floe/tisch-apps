@@ -12,7 +12,7 @@ mail: dippona@in.tum.de
 class victoryMenu : public menu
 {
 public:
-	victoryMenu(int w, int h, int draw, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0xFF );
+	victoryMenu(int w, int h, int draw, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0x07 );
 };
 
 #endif

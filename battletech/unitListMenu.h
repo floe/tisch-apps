@@ -12,7 +12,7 @@ mail: dippona@in.tum.de
 class unitListMenu : public menu
 {
 public:
-	unitListMenu(int w, int h, int _playernumber, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0xFF );
+	unitListMenu(int w, int h, int _playernumber, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0x07 );
 
 	virtual void draw();
 	void openUnitDataContainer(int num);

@@ -12,7 +12,7 @@ mail: dippona@in.tum.de
 class playerMenu : public menu
 {
 public:
-	playerMenu(int w, int h, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0xFF);
+	playerMenu(int w, int h, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0x07);
 
 	void openUnitSelectionMenu();
 	void openUnitListMenu();

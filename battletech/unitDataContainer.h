@@ -16,7 +16,7 @@ mail: dippona@in.tum.de
 class unitDataContainer : public Container
 {
 public:
-	unitDataContainer(int w, int h, int unittype, bool _attacker = false, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0xFF);
+	unitDataContainer(int w, int h, int unittype, bool _attacker = false, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0x07);
 
 	void draw();
 	void drawMissingHitpoints();

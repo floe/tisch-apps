@@ -67,6 +67,7 @@ gametile::gametile(float x, float y, float w, float h, int _type, int xCoord, in
 	points[4][0] = centerX - width; points[4][1] = centerY - 0.5 * height;
 	points[5][0] = centerX - width; points[5][1] = centerY + 0.5 * height;
 
+#if USESHADOW
 	Gesture shadow( "shadow"/*, GESTURE_FLAGS_ONESHOT*/ );
 	BlobDim* bdim = new BlobDim(1<<INPUT_TYPE_SHADOW);
 	std::vector<Dimensions> d;
@@ -88,6 +89,9 @@ gametile::gametile(float x, float y, float w, float h, int _type, int xCoord, in
 	
 	region.gestures.push_back( shadow );
 	region.flags( 1<<INPUT_TYPE_SHADOW | 1<<INPUT_TYPE_FINGER );		
+#else
+	region.flags( 1<<INPUT_TYPE_FINGER );
+#endif
 }
 
 //action depends on current Phase, followed by other dependencies
@@ -201,7 +205,7 @@ void gametile::tap(Vector pos, int id)
 		{
 			if(gameengine.field->infomenu->target_locked) 
 			{
-				((menu*)this->parent)->dropWarning("Cannot attack multiple targets!");
+				((gamefield*)this->parent)->dropWarning("Cannot attack multiple targets!");
 				return;
 			}
 			if(Unit->getmyplayer() == gameengine.field->selectedUnit->getmyplayer())
@@ -220,12 +224,13 @@ void gametile::tap(Vector pos, int id)
 	}
 }
 
+#if USESHADOW
 //selecting units with shadows
 void gametile::action(Gesture *gesture)
 {
 	if (gesture->name() == "shadow")
 	{
-		std::cout << "shadow input" << std::endl;
+		//std::cout << "shadow input" << std::endl;
 		this->tap(0,0);
 	}
 	else
@@ -239,6 +244,7 @@ void gametile::release()
 		this->tap(0,0);
 	}
 }
+#endif
 
 //checks if at least 1 looking direction is true ("red triangle is shown") 
 bool gametile::checkLookDirs()

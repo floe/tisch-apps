@@ -12,7 +12,7 @@ mail: dippona@in.tum.de
 class infoMenu : public menu
 {
 public:
-	infoMenu(int w, int h, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0xFF );
+	infoMenu(int w, int h, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0x07 );
 
 	void displayUnitInfo(unit* unit);
 	void displayTargetInfo(unit* unit);

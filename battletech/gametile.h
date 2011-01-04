@@ -22,8 +22,10 @@ public:
 	void draw();
 //	void drawSelectionCircle(); //draws a selection circle around the unit on this field (if selected)
 	void tap(Vector pos, int id); //action depends on current Phase, followed by other dependencies
+#if USESHADOW
 	void action(Gesture *gesture); //selecting units with shadows
 	void release(); //select unit in movement phase, by lifting a (real)mech in the air
+#endif
 	bool checkLookDirs(); //checks if at least 1 looking direction is true ("red triangle is shown") 
 	void revertDeployment(); //removes the unit from this tile (in Deployment Phase)
 

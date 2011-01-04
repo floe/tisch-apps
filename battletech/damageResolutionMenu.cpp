@@ -55,11 +55,11 @@ damageResolutionMenu::damageResolutionMenu(int w, int h, int x, int y, double an
 	done_label = new Label("Done", 60, 20, 0, -h/2 + 15);
 	this->add(done_label);
 	
-	if(line >= 20)
+	if(line >= 19)
 	{
 		slider = new Slider(h - 60,20,+w/2-20,0,270,tex_storage.getSliderTexture());
 		this->add(slider);
-		slider_lines = line-20;
+		slider_lines = line-19;
 	}
 }
 
@@ -244,20 +244,21 @@ void damageResolutionMenu::showDestruction(int playernumber, int unitnumber)
 
 void damageResolutionMenu::draw()
 {
-	enter();
-	paint();
-
+	
+	enter();	
+	Tile::paint();
+	
 	glMatrixMode(GL_MODELVIEW_MATRIX);
 	glPushMatrix();
 	if(line >= 20) slider_pos =  slider_lines*slider->getpos();
 	else slider_pos = 0;
 	glTranslated(0,((int)slider_pos)*linespacing,1);
-	for(int i = 0 + slider_pos; i < 20 + slider_pos && i < (signed)labels.size(); i++)
+	for(int i = 0 + slider_pos; i < 19 + slider_pos && i < (signed)labels.size(); i++)
 	{
 		labels[i]->draw();
 	}
 	glPopMatrix();
-	if(line >= 20) slider->draw();
+	if(line >= 19) slider->draw();
 	round_label->draw();
 	done_button->draw();
 	done_label->draw();

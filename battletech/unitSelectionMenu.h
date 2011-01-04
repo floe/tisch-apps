@@ -12,7 +12,7 @@ mail: dippona@in.tum.de
 class unitSelectionMenu : public menu
 {
 public:
-	unitSelectionMenu(int w, int h, int _number, int x, int y, double angle = 0.0, RGBATexture* tex = 0, int mode = 0xFF );
+	unitSelectionMenu(int w, int h, int _number, int x, int y, double angle = 0.0, RGBATexture* tex = 0, int mode = 0x07 );
 
 	void openUnitDataContainer(int num);
 	void openUnitSelectionMenu(int num);

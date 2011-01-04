@@ -113,7 +113,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="C:\Andi\Uni\tisch\trunk\framework\widgets;C:\Andi\Uni\tisch\trunk\framework;C:\Andi\Uni\tisch\trunk\framework\gestured\features;C:\Andi\Uni\tisch\trunk\framework\gestured;C:\Andi\Uni\tisch\trunk\framework\libs\tools;C:\Andi\Uni\tisch\trunk\framework\libs\simplecv"
+				AdditionalIncludeDirectories="&quot;C:\Andi\Uni\tisch\trunk\libtisch-1.1\widgets&quot;;&quot;C:\Andi\Uni\tisch\trunk\libtisch-1.1&quot;;&quot;C:\Andi\Uni\tisch\trunk\libtisch-1.1\gestured\features&quot;;&quot;C:\Andi\Uni\tisch\trunk\libtisch-1.1\gestured&quot;;&quot;C:\Andi\Uni\tisch\trunk\libtisch-1.1\libs\tools&quot;;&quot;C:\Andi\Uni\tisch\trunk\libtisch-1.1\libs\simplecv&quot;;&quot;C:\Andi\Uni\tisch\trunk\libtisch-1.1\libs\simplegl&quot;"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				WarningLevel="3"
@@ -131,7 +131,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libtools.lib libgestures.lib libsimplecv.lib libwidgets.lib"
+				AdditionalDependencies="libtools.lib libgestures.lib libsimplecv.lib libsimplegl.lib libwidgets.lib"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

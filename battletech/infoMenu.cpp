@@ -165,9 +165,9 @@ void infoMenu::resetAll()
 
 void infoMenu::resetTarget()
 {
-	this->remove(targetButton);
-	this->remove(fireButton);
-	this->remove(fire_text);
+	targetButton->hide = true;	
+	fireButton->hide = true;
+	fire_text->hide = true;	
 	infotext->set("Select Target");
 	hit_prob_text->set("");
 }

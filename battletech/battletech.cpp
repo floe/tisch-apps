@@ -21,6 +21,8 @@ mail: dippona@in.tum.de
 #include "damageResolutionMenu.h"
 #include "victoryMenu.h"
 
+#define USESHADOW 0
+
 int main(int argc, char **argv)
 {
 	srand ( (unsigned int)time ( NULL ) );
@@ -31,7 +33,7 @@ int main(int argc, char **argv)
 
 	tex_storage.init();
 
-	menu* main = new mainMenu(300,400,10,10,0.0, tex_storage.getContainerTexture(),0xFF);
+	menu* main = new mainMenu(300,400,10,10,0.0, tex_storage.getContainerTexture(),0x07);
 	win->add(main);
 
 	win->run();

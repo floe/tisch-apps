@@ -616,7 +616,7 @@ int gamefield::get_terrain_modifier()
 
 void gamefield::startNewGame()
 {
-	((Container*)this->parent)->add(new mainMenu(300,400,10,10,0.0, 0,0xFF));
+	((Container*)this->parent)->add(new mainMenu(300,400,10,10,0.0, 0,0x07));
 	gameengine.resetValuesForNewGame();
 }
 

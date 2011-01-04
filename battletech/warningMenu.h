@@ -12,7 +12,7 @@ mail: dippona@in.tum.de
 class warningMenu : public menu
 {
 public:
-	warningMenu(int w, int h, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0xFF );
+	warningMenu(int w, int h, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0x07 );
 	void setText(std::string str);
 	//void outline();
 	void draw();

@@ -12,7 +12,7 @@ mail: dippona@in.tum.de
 class damageResolutionMenu : public menu
 {
 public:
-	damageResolutionMenu(int w, int h, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0xFF );
+	damageResolutionMenu(int w, int h, int x = 0, int y = 0, double angle = 0.0, RGBATexture* tex = 0, int mode = 0x07 );
 
 	void addWeaponFireString(int playernumber, int unitnumber);
 	void addTargetString(int playernumber, int unitnumber);
