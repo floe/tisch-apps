@@ -45,14 +45,23 @@ class MixerBlock: public Container {
 int main( int argc, char* argv[] ) {
 
 	// create a new window: width, height, title, use_mouse
-	Window* win = new Window( 800, 480, "Audio Mixer Demo", (argc > 1) );
+	Window* win = new Window( 1200, 800, "Audio Mixer Demo", (argc > 1) );
 	win->texture( 0 );
 
-	MixerBlock* foo = new MixerBlock( 150, 400, 0, 0, 0, 0 );
-	win->add( foo );
+	Container* c;
+	MixerBlock* foo;
 
-	foo = new MixerBlock( 150, 400, 150, 0, 0, 0 );
-	win->add( foo );
+	c = new Container( 650,450, -200,0, 0,0, 0xFF ); win->add( c );
+	foo = new MixerBlock( 150, 400, -225, 0, 0, 0 ); c->add( foo );
+	foo = new MixerBlock( 150, 400,  -75, 0, 0, 0 ); c->add( foo );
+	foo = new MixerBlock( 150, 400,   75, 0, 0, 0 ); c->add( foo );
+	foo = new MixerBlock( 150, 400,  225, 0, 0, 0 ); c->add( foo );
+
+	c = new Container( 650,450, 200,0, 0,0, 0xFF ); win->add( c );
+	foo = new MixerBlock( 150, 400, -225, 0, 0, 0 ); c->add( foo );
+	foo = new MixerBlock( 150, 400,  -75, 0, 0, 0 ); c->add( foo );
+	foo = new MixerBlock( 150, 400,   75, 0, 0, 0 ); c->add( foo );
+	foo = new MixerBlock( 150, 400,  225, 0, 0, 0 ); c->add( foo );
 
 	win->update();
 	win->run();
