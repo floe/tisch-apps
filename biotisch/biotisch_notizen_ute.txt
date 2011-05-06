@@ -1,0 +1,13 @@
+fluoreszenzscanner -> bild -> anzeigen auf tisch
+geräte rechzeitig "vorwärmen", z.b. uv-spektroskop
+statusanzeigen (pcr-maschine)
+thermoschüttler: temperatur einstellen
+zentrifugen
+stoppuhr -> piepser zum anstecken
+pipette - volumen einstellen
+spektrum auf tisch anzeigen
+puffer ausrechnen http://www.liv.ac.uk/buffers/buffercalc.html
+protokoll als liste, mit highlight von aktuellem schritt
+pipettierschemata
+laborbuch weiterführen
+eppis "highlighten"
