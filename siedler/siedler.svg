@@ -14,7 +14,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.3.1 r9886"
-   sodipodi:docname="siedler.svg">
+   sodipodi:docname="siedler.svg"
+   inkscape:export-filename="/home/echtler/src/tisch.svn/applets/siedler/siedler.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -24,9 +27,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="1"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.59057318"
-     inkscape:cx="543.38916"
-     inkscape:cy="453.13408"
+     inkscape:zoom="0.96333333"
+     inkscape:cx="400"
+     inkscape:cy="300"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -56,7 +59,8 @@
      id="layer1"
      transform="translate(0,-452.36213)">
     <g
-       id="g3993">
+       id="g3993"
+       transform="matrix(0.48709169,0,0,0.48709169,161.76975,404.42153)">
       <path
          transform="matrix(0.20422809,0.35373342,-0.35373342,0.20422809,423.30462,501.04039)"
          d="M 160.00001,406.95244 -25.84061,299.65732 -25.840616,85.06706 159.99999,-22.228073 345.84061,85.06705 l 10e-6,214.59026 z"
