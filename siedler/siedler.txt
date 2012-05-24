@@ -1,0 +1,5 @@
+0: alles virtuell: spielfeld, häuser, würfel (karten real)
+1: würfel virtuell, spielfeld/karten/häuser real
+2: häuser virtuell, spielfeld/karten/würfel real
+3: spielfeld virtuell, würfel/karten/häuser real
+4: alles real + augmentiertes spielfeld (wahrscheinlichkeits-anzeige)
