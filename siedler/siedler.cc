@@ -15,17 +15,24 @@
 #include "Label.h"
 
 // This class demonstrates how to react to the predefined tap gesture using Button as superclass.
-/*class MyButton: public Button {
+class MyButton: public Button {
 	public:
 
 		MyButton( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0 ):
-			Button( _w,_h,_x,_y,angle,_tex) { }
+			Button( _w,_h,_x,_y,angle,_tex)
+		{
+			lbl = new Label("xyz",50,20,x+50,y+50);
+		}
 
-		void tap( Vector pos, int id ) { lbl->set( " tap!" ); }
-		void release( ) { lbl->set( " Button" ); }
+		void init() { parent->add(lbl); }
 
-};*/
+		void tap( Vector pos, int id ) { lbl->set( "foo!" ); }
+		void release( ) { lbl->set( " " ); }
 
+		Label* lbl;
+};
+
+int bsize = 15;
 
 int main( int argc, char* argv[] ) {
 
@@ -36,14 +43,14 @@ int main( int argc, char* argv[] ) {
 	Window* win = new Window( 800, 600, "siedler", (argc > 1) );
 	win->texture( new RGBATexture("siedler.png") );
 
-	Button* btn1 = new Button( 10,10,   0,-33.5 ); win->add( btn1 );
-	Button* btn2 = new Button( 10,10,   0, 33.5 ); win->add( btn2 );
+	MyButton* btn1 = new MyButton( bsize,bsize,   0,-33.5 ); win->add( btn1 ); btn1->init();
+	MyButton* btn2 = new MyButton( bsize,bsize,   0, 33.5 ); win->add( btn2 ); btn2->init();
 
-	Button* btn3 = new Button( 10,10,  29,-17.5 ); win->add( btn3 );
-	Button* btn4 = new Button( 10,10,  29, 17.5 ); win->add( btn4 );
+	MyButton* btn3 = new MyButton( bsize,bsize,  29,-17.5 ); win->add( btn3 ); btn3->init();
+	MyButton* btn4 = new MyButton( bsize,bsize,  29, 17.5 ); win->add( btn4 ); btn4->init();
 
-	Button* btn5 = new Button( 10,10, -29,-17.5 ); win->add( btn5 );
-	Button* btn6 = new Button( 10,10, -29, 17.5 ); win->add( btn6 );
+	MyButton* btn5 = new MyButton( bsize,bsize, -29,-17.5 ); win->add( btn5 ); btn5->init();
+	MyButton* btn6 = new MyButton( bsize,bsize, -29, 17.5 ); win->add( btn6 ); btn6->init();
 
 	win->update();
 	win->run();
