@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">DatatransferApp</string>
+    <string name="server">TISCH Server Adresse</string>
+    <string name="port">TISCH Server Port</string>
+    <string name="buttonConnect">Verbinden</string>
+
+</resources>
