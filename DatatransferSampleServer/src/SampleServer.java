@@ -7,6 +7,14 @@ public class SampleServer {
 	ServerSocket serverSocket = null;
 	int serverPort = 8080;
 	Thread mThread = null;
+	private byte[][] idList = new byte[][] {
+			new byte[] { (byte) 0x12, (byte) 0x28 }, // 1228
+			new byte[] { (byte) 0x1c, (byte) 0x44 }, // 1c44
+			new byte[] { (byte) 0x0b, (byte) 0x44 }, // 0b44
+			new byte[] { (byte) 0x06, (byte) 0x90 }, // 0690
+			new byte[] { (byte) 0x00, (byte) 0x5a }, // 005a
+			new byte[] { (byte) 0x02, (byte) 0x72 } // 0272
+	};
 
 	public SampleServer() throws IOException {
 		System.out.println("create ServerSocket ...");
@@ -17,13 +25,13 @@ public class SampleServer {
 			TcpServer tcpServer = new TcpServer(serverPort);
 			mThread = new Thread(tcpServer);
 			mThread.start();
-			
+
 		}
 
 	}
 
 	public static void main(String args[]) throws IOException {
-		SampleServer server = new SampleServer();
+		new SampleServer();
 	}
 
 	// -------------------------------------------------------------
@@ -41,7 +49,8 @@ public class SampleServer {
 		@Override
 		public void run() {
 			while (runTcpServer) {
-				System.out.println("TCP Server running, wait for connections ...");
+				System.out
+						.println("TCP Server running, wait for connections ...");
 				try {
 					Socket requestSocket = serverSocket.accept();
 					TcpRequest tcpRequest = new TcpRequest(requestSocket,
@@ -69,11 +78,15 @@ public class SampleServer {
 	// -------------------------------------------------------------
 	// Request
 	// -------------------------------------------------------------
-
 	public class TcpRequest implements Runnable {
 
 		Socket clientSocket;
 		int TCP_PORT;
+		private DataInputStream dis;
+		private DataOutputStream dos;
+		byte[] request = new byte[] { (byte) 0x72, (byte) 0x65, (byte) 0x71,
+				(byte) 0x75, (byte) 0x65, (byte) 0x73, (byte) 0x74,
+				(byte) 0x49, (byte) 0x44 };
 
 		public TcpRequest(Socket socket, int port) {
 			this.clientSocket = socket;
@@ -83,54 +96,76 @@ public class SampleServer {
 		@Override
 		public void run() {
 			System.out.println("Client connected, handle connection ...");
-			handleBytes();
+
+			try {
+				initConnection();
+
+				handleRequest();
+
+				closeConnection();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 		}
 
-		public void handleBytes() {
-			try {
-				// =========================================================
-				// from client
-				// =========================================================
-				InputStream is = clientSocket.getInputStream();
-				byte[] receive_buffer = new byte[4096];
-				int in_len = -1;
+		private void initConnection() throws IOException {
+			dis = new DataInputStream(clientSocket.getInputStream());
+			dos = new DataOutputStream(clientSocket.getOutputStream());
 
-				in_len = is.read(receive_buffer);
+		}
 
-				if (in_len > 0) {
-					byte[] dataFromClient = Arrays.copyOfRange(receive_buffer,
-							0, in_len);
-				}
-				// =========================================================
-				// to client
-				// =========================================================
-				DataOutputStream dos = new DataOutputStream(
-						clientSocket.getOutputStream());
-				byte[] toClient;
-				int out_len, start;
+		private void handleRequest() throws IOException {
+			// =========================================================
+			// from client
+			// =========================================================
+			int in_len = dis.readInt();
+			byte[] receive_buffer = new byte[in_len];
 
-				toClient = new byte[] { (byte) 0x40, (byte) 0x41 };
-				out_len = toClient.length;
-				start = 0;
+			dis.readFully(receive_buffer);
+			boolean validRequest = false;
 
-				dos.writeInt(out_len);
-				if (out_len > 0) {
-					dos.write(toClient, start, out_len);
-				}
-				
-				clientSocket.close();
+			if (in_len > 0) {
+				System.out.println(Converter
+						.ByteArrayToHexString(receive_buffer));
 
-			} catch (IOException e) {
+				validRequest = Arrays.equals(receive_buffer, request);
 
-			} finally {
-				if (clientSocket != null) {
-					try {
-						clientSocket.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
 			}
+			// =========================================================
+			// to client
+			// =========================================================
+			byte[] toClient;
+			int out_len, start;
+			start = 0;
+
+			if (validRequest) {
+
+				toClient = idList[0];
+				out_len = toClient.length;
+
+			} else {
+				// error
+				toClient = new byte[] { (byte) 0x65, (byte) 0x72, (byte) 0x72,
+						(byte) 0x6f, (byte) 0x72 };
+				out_len = toClient.length;
+
+			}
+
+			// send header
+			dos.writeInt(out_len);
+
+			// send payload
+			if (out_len > 0) {
+				dos.write(toClient, start, out_len);
+			}
+
+		}
+
+		private void closeConnection() throws IOException {
+			clientSocket.close();
+
 		}
 
 	}
