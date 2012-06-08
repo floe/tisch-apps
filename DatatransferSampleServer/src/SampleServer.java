@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.Arrays;
+import java.util.Random;
 
 public class SampleServer {
 
@@ -84,7 +85,8 @@ public class SampleServer {
 		int TCP_PORT;
 		private DataInputStream dis;
 		private DataOutputStream dos;
-		byte[] request = new byte[] { (byte) 0x72, (byte) 0x65, (byte) 0x71,
+		byte[] request = new byte[] { 
+				(byte) 0x72, (byte) 0x65, (byte) 0x71,
 				(byte) 0x75, (byte) 0x65, (byte) 0x73, (byte) 0x74,
 				(byte) 0x49, (byte) 0x44 };
 
@@ -142,7 +144,8 @@ public class SampleServer {
 
 			if (validRequest) {
 
-				toClient = idList[0];
+				int rnd = new Random().nextInt(idList.length);
+		        toClient = idList[rnd];
 				out_len = toClient.length;
 
 			} else {

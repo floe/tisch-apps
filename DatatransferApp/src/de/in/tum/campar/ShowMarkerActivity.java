@@ -84,5 +84,40 @@ public class ShowMarkerActivity extends Activity {
 
 		}
 
+		for (int x = 0; x != markerID.length; x++) {
+			
+			byte tmp = (byte) (markerID[x] >> 4);
+			System.out.println((x + 1) + "tes Element aus dem Array::");
+			for (int y = 0; y != 4; y++) // 8 stellen hat ein Byte
+			{
+//				Log.d("","  Bit an der " + (y + 1)
+//						+ " Stelle (entspricht "
+//						+ (int) java.lang.Math.pow(2, y) + ") ist: "
+//						+ (tmp & 1));
+				
+				if((tmp & 1) == 1) {
+					rect = new Rect((5-y)*block_size,x*2*block_size+2*block_size,(6-y)*block_size,x*2*block_size+3*block_size);
+					canvas.drawRect(rect, paint);
+				}
+				tmp >>= 1;
+			}
+			
+			tmp = markerID[x];
+			
+			for (int y = 0; y != 4; y++) // 8 stellen hat ein Byte
+			{
+//				Log.d("","  Bit an der " + (y + 1)
+//						+ " Stelle (entspricht "
+//						+ (int) java.lang.Math.pow(2, y) + ") ist: "
+//						+ (tmp & 1));
+				if((tmp & 1) == 1) {
+					rect = new Rect((5-y)*block_size,x*2*block_size+3*block_size,(6-y)*block_size,x*2*block_size+4*block_size);
+					canvas.drawRect(rect, paint);
+				}
+				tmp >>= 1;
+			}
+			
+		}
+
 	}
 }
