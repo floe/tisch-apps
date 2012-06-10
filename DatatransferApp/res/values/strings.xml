@@ -10,4 +10,8 @@
     <string name="portValue">8080</string>
     <!-- ShowMarker -->
 	<string name="showMarker">display Marker</string>
+	<!-- TcpClient Service -->
+	<string name="tcpClientStarted">Client started</string>
+	<!-- ShowExchangeMenu -->
+	<string name="showExchangeMenu">Exchange Menu</string>
 </resources>

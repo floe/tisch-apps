@@ -10,6 +10,8 @@ import java.util.Arrays;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,7 +28,10 @@ import android.widget.TextView;
 
 public class DatatransferAppActivity extends Activity {
 
-	private TcpClient client;
+	private Activity mMainActivity;
+	private Context mMainContext;
+	private ComponentName mStartedService;
+	private TcpClientService mTcpClient;
 
 	private ProgressDialog progressDialog;
 
@@ -35,24 +40,44 @@ public class DatatransferAppActivity extends Activity {
 	// -----------------------------------------------------------------------
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		Log.d("DatatransferApp", "onCreate()");
 		// -> onStart
 		super.onCreate(savedInstanceState);
 
+		mMainActivity = this;
+		mMainContext = getApplicationContext();
+
 		setDisplayOrientation();
+
+		startService();
+
+		new Thread() {
+			// wait until client is up, then set response handler
+			public void run() {
+				while ((mTcpClient = TcpClientService.getInstance()) == null) {
+
+				}
+				mTcpClient.setResponseHandler(handleTCPResponses);
+
+			}
+		}.start();
 
 		setupButtonsAndListeners();
 	}
 
 	@Override
 	protected void onStart() {
+		Log.d("DatatransferApp", "onStart()");
 		// -> onResume
 		super.onStart();
 	}
 
 	@Override
 	protected void onResume() {
+		Log.d("DatatransferApp", "onResume()");
 		// -> onPause
 		super.onResume();
+
 	}
 
 	// -----------------------------------------------------------------------
@@ -61,6 +86,7 @@ public class DatatransferAppActivity extends Activity {
 
 	@Override
 	protected void onPause() {
+		Log.d("DatatransferApp", "onPause()");
 		// -> onResume
 		// -> onCreate
 		// -> onStop
@@ -69,6 +95,7 @@ public class DatatransferAppActivity extends Activity {
 
 	@Override
 	protected void onStop() {
+		Log.d("DatatransferApp", "onStop()");
 		// -> onRestart
 		// -> onDestroy
 		super.onStop();
@@ -76,13 +103,14 @@ public class DatatransferAppActivity extends Activity {
 
 	@Override
 	protected void onRestart() {
+		Log.d("DatatransferApp", "onRestart()");
 		// -> onStart
 		super.onRestart();
 	}
 
 	@Override
 	protected void onDestroy() {
-		// TODO Auto-generated method stub
+		Log.d("DatatransferApp", "onDestroy()");
 		super.onDestroy();
 	}
 
@@ -97,7 +125,17 @@ public class DatatransferAppActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
+		case R.id.startSerice:
+			startService(new Intent(DatatransferAppActivity.this,
+					TcpClientService.class));
+			break;
+		case R.id.stopService:
+			stopService(new Intent(DatatransferAppActivity.this,
+					TcpClientService.class));
+			break;
 		case R.id.exit:
+			stopService(new Intent(DatatransferAppActivity.this,
+					TcpClientService.class));
 			// Todo: stop threads
 			finish();
 			break;
@@ -130,28 +168,59 @@ public class DatatransferAppActivity extends Activity {
 		connect.setOnClickListener(connectToServer);
 	}
 
-	private Handler handleMarkerID = new Handler() {
+	private void startService() {
+		Log.d("DataTransferApp", "start TCP Client Service");
+		Intent tcpService = new Intent(mMainContext, TcpClientService.class);
+		TcpClientService.setMainActivity(mMainActivity);
+		TcpClientService.setMainContext(mMainContext);
+		mStartedService = startService(tcpService);
+		Log.d("DataTransferApp", "TCP Client Service started");
+	}
+
+	public Handler handleTCPResponses = new Handler() {
 
 		@Override
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
+			Bundle myBundle;
+			Intent intent;
 
 			switch (msg.what) {
-			case 0: // everthing ok
-				Bundle myBundle = msg.getData();
-				byte[] markerID = myBundle.getByteArray("markerID");
+			case -1: // error occured while getting an ID
+				myBundle = msg.getData();
+				Log.d("handleTCPResponses", "error occured");
+				Log.d("handleMarkerID",
+						"received markerID "
+								+ Converter.ByteArrayToHexString(myBundle
+										.getByteArray("response")));
+				break;
+
+			case 0: // response contains markerID
+				myBundle = msg.getData();
+				byte[] markerID = myBundle.getByteArray("response");
 				Log.d("handleMarkerID",
 						"received markerID "
 								+ Converter.ByteArrayToHexString(markerID));
 
-				Intent intent = new Intent(getBaseContext(),
-						ShowMarkerActivity.class);
+				intent = new Intent(getBaseContext(), ShowMarkerActivity.class);
 				intent.putExtra("markerID", markerID);
-				startActivity(intent);
 
+				startActivity(intent);
+				mTcpClient.waitForMarkerFound();
 				break;
-			case 1: // error occured while getting an ID
-				Log.d("handleMarkerID", "error occured getting a markerID");
+
+			case 1: // marker was found
+
+				myBundle = msg.getData();
+				byte[] markerFound = myBundle.getByteArray("response");
+				Log.d("handleMarkerID",
+						"received markerID "
+								+ Converter.ByteArrayToHexString(markerFound));
+
+				intent = new Intent(getBaseContext(), ShowExchangeMenu.class);
+				// intent.putExtra("markerID", markerFound);
+
+				startActivity(intent);
 				break;
 			}
 		}
@@ -170,117 +239,12 @@ public class DatatransferAppActivity extends Activity {
 			Log.d("connectToServer", "ip: " + ip);
 			Log.d("connectToServer", "port: " + port);
 
-			client = new TcpClient(ip, port);
-			Thread clientThread = new Thread(client);
-			clientThread.start();
+			mTcpClient.establishConnection(ip, port);
+			mTcpClient.requestMarkerID();
+
 		}
 
 	};
 
-	public class TcpClient implements Runnable {
 
-		int port;
-		String target;
-		Socket clientSocket;
-		private DataOutputStream dos;
-		private DataInputStream dis;
-		private byte[] errorMsg = new byte[] { (byte) 0x65, (byte) 0x72,
-				(byte) 0x72, (byte) 0x6f, (byte) 0x72 };
-
-		private Message msg;
-		private Bundle mBundle;
-
-		public TcpClient(String target, int port) {
-			this.port = port;
-			this.target = target;
-		}
-
-		private void initConnection() throws UnknownHostException, IOException {
-			msg = Message.obtain();
-			msg.what = 0;
-			mBundle = new Bundle();
-			clientSocket = new Socket(target, port);
-			dos = new DataOutputStream(clientSocket.getOutputStream());
-			dis = new DataInputStream(clientSocket.getInputStream());
-
-		}
-
-		private void requestID() throws IOException {
-			// =========================================================
-			// to server
-			// =========================================================
-			// send request to server
-			byte[] toServer;
-			int out_len, start;
-
-			// requestID
-			toServer = new byte[] { (byte) 0x72, (byte) 0x65, (byte) 0x71,
-					(byte) 0x75, (byte) 0x65, (byte) 0x73, (byte) 0x74,
-					(byte) 0x49, (byte) 0x44 };
-			out_len = toServer.length;
-			start = 0;
-
-			// send header
-			dos.writeInt(out_len);
-
-			// send payload
-			if (out_len > 0) {
-				dos.write(toServer, start, out_len);
-			}
-
-			// =========================================================
-			// from server
-			// =========================================================
-			// receiver server response
-			// read header
-			int in_len = dis.readInt();
-			byte[] receive_buffer = new byte[in_len];
-
-			// read payload
-			dis.readFully(receive_buffer);
-
-			boolean error = true;
-			if (in_len > 0) {
-				Log.d("from Server",
-						Converter.ByteArrayToHexString(receive_buffer));
-				error = Arrays.equals(receive_buffer, errorMsg);
-			}
-
-			if (!error) {
-				mBundle.putByteArray("markerID", receive_buffer);
-				msg.setData(mBundle);
-				handleMarkerID.sendMessage(msg);
-			} else {
-				handleMarkerID.sendEmptyMessage(1);
-			}
-
-		}
-
-		private void closeConnection() throws IOException {
-
-			clientSocket.close();
-
-		}
-
-		public void run() {
-
-			try {
-
-				initConnection();
-
-				requestID();
-
-				closeConnection();
-
-			} catch (UnknownHostException e) {
-
-				e.printStackTrace();
-			} catch (IOException e) {
-
-				e.printStackTrace();
-			}
-
-		}
-
-	}
 }

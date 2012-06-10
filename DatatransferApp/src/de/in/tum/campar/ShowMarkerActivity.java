@@ -30,6 +30,7 @@ public class ShowMarkerActivity extends Activity {
 		createMarkerImage(markerID);
 		image.setImageBitmap(markerImage);
 
+		
 	}
 
 	private void createMarkerImage(byte[] markerID) {
@@ -87,7 +88,7 @@ public class ShowMarkerActivity extends Activity {
 		for (int x = 0; x != markerID.length; x++) {
 			
 			byte tmp = (byte) (markerID[x] >> 4);
-			System.out.println((x + 1) + "tes Element aus dem Array::");
+//			System.out.println((x + 1) + "tes Element aus dem Array::");
 			for (int y = 0; y != 4; y++) // 8 stellen hat ein Byte
 			{
 //				Log.d("","  Bit an der " + (y + 1)

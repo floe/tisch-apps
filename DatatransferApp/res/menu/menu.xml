@@ -2,6 +2,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
+        android:id="@+id/startSerice"
+        android:title="start TCP Client"/>
+    <item
+        android:id="@+id/stopService"
+        android:title="stop TCP Client"/>
+    <item
         android:id="@+id/exit"
         android:title="Exit"/>
 

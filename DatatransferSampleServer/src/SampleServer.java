@@ -81,14 +81,22 @@ public class SampleServer {
 	// -------------------------------------------------------------
 	public class TcpRequest implements Runnable {
 
+		int protocolStep;
 		Socket clientSocket;
 		int TCP_PORT;
 		private DataInputStream dis;
 		private DataOutputStream dos;
-		byte[] request = new byte[] { 
-				(byte) 0x72, (byte) 0x65, (byte) 0x71,
-				(byte) 0x75, (byte) 0x65, (byte) 0x73, (byte) 0x74,
-				(byte) 0x49, (byte) 0x44 };
+		byte[][] request = new byte[][] { //
+		new byte[] { // requestID
+				(byte) 0x72, (byte) 0x65, (byte) 0x71, (byte) 0x75,
+						(byte) 0x65, (byte) 0x73, (byte) 0x74, (byte) 0x49,
+						(byte) 0x44 }, //
+				new byte[] { // waitForID
+				(byte) 0x77, (byte) 0x61, (byte) 0x69, (byte) 0x74,
+						(byte) 0x46, (byte) 0x6f, (byte) 0x72, (byte) 0x49,
+						(byte) 0x44 //
+				} //
+		};
 
 		public TcpRequest(Socket socket, int port) {
 			this.clientSocket = socket;
@@ -132,21 +140,45 @@ public class SampleServer {
 				System.out.println(Converter
 						.ByteArrayToHexString(receive_buffer));
 
-				validRequest = Arrays.equals(receive_buffer, request);
+				for (int i = 0; i < request.length; i++) {
+					validRequest = Arrays.equals(receive_buffer, request[i]);
+
+					if (validRequest) {
+						System.out.println("i: " + i);
+						protocolStep = i;
+						break;
+					}
+
+				}
 
 			}
 			// =========================================================
 			// to client
 			// =========================================================
-			byte[] toClient;
-			int out_len, start;
-			start = 0;
+			byte[] toClient = null;
+			int out_len = 0;
+			int start = 0;
 
 			if (validRequest) {
+				switch (protocolStep) {
+				case 0:
+					int rnd = new Random().nextInt(idList.length);
+					toClient = idList[rnd];
+					out_len = toClient.length;
+					break;
+				case 1:
+					toClient = new byte[] {(byte) 0x61, (byte) 0x69};
+					out_len = toClient.length;
+					Random random = new Random();
+					int myRandomNumber = random.nextInt(10000 - 5000) + 5000;
+					try {
+						Thread.sleep(myRandomNumber);
+					} catch (InterruptedException ex) {
+						Thread.currentThread().interrupt();
+					}
 
-				int rnd = new Random().nextInt(idList.length);
-		        toClient = idList[rnd];
-				out_len = toClient.length;
+					break;
+				}
 
 			} else {
 				// error
