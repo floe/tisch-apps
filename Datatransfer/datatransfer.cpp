@@ -3,22 +3,7 @@
 *     Copyright (c) 2012 by Norbert Wiedermann, <wiederma@in.tum.de>      *
 *   Licensed under GNU Lesser General Public License (LGPL) 3 or later    *
 \*************************************************************************/
-#pragma once
-#ifdef _MSC_VER
-	#define _AFXDLL
-	#include <Afxwin.h>
-	#include <WinSock2.h>
-	#include <WinSock.h>
-	typedef int socklen_t;
-	
-#else
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#define	INVALID_SOCKET -1
-	#define	SOCKET_ERROR -1
-	#define SOCKET int
-	#define SOCKADDR struct sockaddr
-#endif
+#include "Datatransfer\datatransfer.h"
 
 #include <stdlib.h>
 #include <nanolibc.h>
@@ -34,6 +19,8 @@
 using namespace std;
 
 Window* win = 0;
+
+MarkerID* pMarkerID;
 
 class HandyDropZone: public Tile {
 public: HandyDropZone( int _x, int _y, RGBATexture* _tex):
@@ -109,125 +96,164 @@ public:
 	} // void action( Gesture* gesture ) {
 };
 
-class TcpRequestThread {
-public:
-	static UINT TcpRequestThreadStaticEntryPoint(LPVOID pThis) {
-		TcpRequestThread* pthisTcpRequest = (TcpRequestThread*) pThis;
-		pthisTcpRequest->TcpRequestThreadEntryPoint();
-		return 1;
-	}
+void TcpRequestThread::setSocket(int _markerID, SOCKET _socket, sockaddr_in _from) {
 
-	void TcpRequestThreadEntryPoint() {
-		cout << "handle request" << endl;
-		// =========================================================
-		// from client
-		// =========================================================
+	markerID = _markerID;
+	socket = _socket;
+	from = _from;
+}
 
-		// =========================================================
-		// to client
-		// =========================================================
-		cout << "done" << endl;
-	}
-};
+void TcpRequestThread::TcpRequestThreadEntryPoint() {
+	cout << "handle request" << endl;
+	// =========================================================
+	// from client
+	// =========================================================
 
-class TcpServerThread {
-public:
-	SOCKET AcceptSocket;
-	SOCKET ListenSocket;
-	int PORT;
-	sockaddr_in local;
-	sockaddr_in from;
-
-	static UINT TcpServerThreadStaticEntryPoint(LPVOID pThis) {
-		TcpServerThread* pthisTcpServer = (TcpServerThread*)pThis;
-		pthisTcpServer->PORT = 8080;
-		pthisTcpServer->TcpServerThreadEntryPoint();
-		return 0;
-	}
-
-	void TcpServerThread::initNetwork() {
-		cout << "starting up TCP server ... ";
-
-		WSADATA wsaData;
 	
-		int wsaret = WSAStartup(MAKEWORD(2,2), &wsaData);
-		if(wsaret != 0) {
-			cout << endl << "WSAStartup failed" << endl;
-			exit(1);
-		}
+	// =========================================================
+	// to client
+	// =========================================================
+	
+	char temp[512];
+	sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
+	send(socket, temp, strlen(temp), 0);
+	cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
+	closesocket(socket);
 
-		local.sin_family = AF_INET;
-		local.sin_addr.s_addr = INADDR_ANY;
-		local.sin_port = htons(PORT);
+	cout << "done" << endl;
+}
 
-		ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
+void TcpServerThread::initNetwork() {
+	cout << "starting up TCP server ... ";
 
-		if(ListenSocket == INVALID_SOCKET) {
-			cout << endl << "socket() failed" << endl;
-	#ifdef _MSC_VER
-			WSACleanup();
-	#endif
-			exit(2);
-		}
+	WSADATA wsaData;
+	
+	int wsaret = WSAStartup(MAKEWORD(2,2), &wsaData);
+	if(wsaret != 0) {
+		cout << endl << "WSAStartup failed" << endl;
+		exit(1);
+	}
 
-		if(bind(ListenSocket, (sockaddr*)&local, sizeof(local)) != 0) {
-			cout << endl << "bind() failed" << endl;
+	local.sin_family = AF_INET;
+	local.sin_addr.s_addr = INADDR_ANY;
+	local.sin_port = htons(PORT);
+
+	ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+	if(ListenSocket == INVALID_SOCKET) {
+		cout << endl << "socket() failed" << endl;
 #ifdef _MSC_VER
 		WSACleanup();
 #endif
-			exit(3);
-		}
-
-		if(listen(ListenSocket, 10) != 0) {
-			cout << endl << "listen() failed" << endl;
-	#ifdef _MSC_VER
-			WSACleanup();
-	#endif
-			exit(4);
-		}
+		exit(2);
 	}
 
-	void TcpServerThread::TcpServerThreadEntryPoint() {
+	if(bind(ListenSocket, (sockaddr*)&local, sizeof(local)) != 0) {
+		cout << endl << "bind() failed" << endl;
+#ifdef _MSC_VER
+	WSACleanup();
+#endif
+		exit(3);
+	}
 
-		initNetwork();
+	if(listen(ListenSocket, 10) != 0) {
+		cout << endl << "listen() failed" << endl;
+#ifdef _MSC_VER
+		WSACleanup();
+#endif
+		exit(4);
+	}
 
-		int fromlen = sizeof(from);
+}
 
-		cout << "waiting for connections" << endl;
-		while(true) {
-			char temp[512];
-			AcceptSocket = accept(ListenSocket, (struct sockaddr*) &from, &fromlen);
-			if (AcceptSocket == INVALID_SOCKET) {
-				cout << endl << "accept() failed" << endl;
-				closesocket(ListenSocket);
-	#ifdef _MSC_VER
-				WSACleanup();
-	#endif
-				exit(5);
+void TcpServerThread::TcpServerThreadEntryPoint() {
+
+	initNetwork();
+	
+	int fromlen = sizeof(from);
+
+	// data structure to manage open connections
+	map<int, SOCKET> openConnections;
+	map<int, SOCKET>::iterator it;
+	pair<map<int, SOCKET>::iterator, bool> ret;
+
+	cout << "waiting for connections" << endl;
+	while(true) {
+		
+		AcceptSocket = accept(ListenSocket, (struct sockaddr*) &from, &fromlen);
+		if (AcceptSocket == INVALID_SOCKET) {
+			cout << endl << "accept() failed" << endl;
+			closesocket(ListenSocket);
+#ifdef _MSC_VER
+			WSACleanup();
+#endif	
+			exit(5);
+		}
+
+		int useMarkerID = -1;
+
+		for(int i = 0; i < 6; i++) {
+			if(pMarkerID[i].thread == NULL) {
+				// use this ID no thread attached
+				useMarkerID = pMarkerID[i].markerID;
+
+				break;
 			}
+			
+		}
 
-			TcpRequestThread* request = new TcpRequestThread();
-			AfxBeginThread(TcpRequestThread::TcpRequestThreadStaticEntryPoint, (void*)request);
-
-			sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
-			send(AcceptSocket, temp, strlen(temp), 0);
-			cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
+		if(useMarkerID == -1) {
+			cout << "no marker ID left, try later again" << endl;
 			closesocket(AcceptSocket);
 		}
+		else {
+			pair<int, SOCKET> connection;
+			connection.first = useMarkerID;
+			connection.second = AcceptSocket;
+			openConnections.insert(connection);
 
-		closesocket(ListenSocket);
-	#ifdef _MSC_VER
-		WSACleanup();
-	#endif
-		exit(0);
-	}
+			cout << "used iD: " << useMarkerID << endl;
 
-};
+			TcpRequestThread* request = new TcpRequestThread();
+
+			for(int i = 0; i < 6; i++) {
+				if(useMarkerID == pMarkerID[i].markerID) {
+					pMarkerID[i].thread = request;
+					break;
+				}
+			
+			}
+		
+			request->setSocket(connection.first, connection.second, from);
+			AfxBeginThread(TcpRequestThread::TcpRequestThreadStaticEntryPoint, (void*)request);
+		}
+		//char temp[512];
+		//sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
+		//send(AcceptSocket, temp, strlen(temp), 0);
+		//cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
+		//closesocket(AcceptSocket);
+
+	} // while(true)
+
+	closesocket(ListenSocket);
+#ifdef _MSC_VER
+	WSACleanup();
+#endif
+	exit(0);
+}
 
 int main( int argc, char* argv[] ) {
 	cout << "Datatransfer - libTISCH demo" << endl;
 	cout << "by Norbert Wiedermann (wiederma@in.tum.de) 2012" << endl;
 
+	pMarkerID = new MarkerID[6];
+	pMarkerID[0].markerID = 4648; pMarkerID[0].thread = NULL; // 1228
+	pMarkerID[1].markerID = 7236; pMarkerID[1].thread = NULL; // 1c44
+	pMarkerID[2].markerID = 2884; pMarkerID[2].thread = NULL; // 0b44
+	pMarkerID[3].markerID = 1680; pMarkerID[3].thread = NULL; // 0690
+	pMarkerID[4].markerID = 90;   pMarkerID[4].thread = NULL; // 005a
+	pMarkerID[5].markerID = 626 ; pMarkerID[5].thread = NULL; // 0272
+	
 	int width = 640;
 	int height = 480;
 
