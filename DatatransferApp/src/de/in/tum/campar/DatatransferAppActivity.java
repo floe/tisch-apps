@@ -197,7 +197,8 @@ public class DatatransferAppActivity extends Activity {
 
 			case 0: // response contains markerID
 				myBundle = msg.getData();
-				byte[] markerID = myBundle.getByteArray("response");
+				byte[] markerIDtmp = myBundle.getByteArray("response");
+				byte[] markerID = { markerIDtmp[2], markerIDtmp[3] }; 
 				Log.d("handleMarkerID",
 						"received markerID "
 								+ Converter.ByteArrayToHexString(markerID));

@@ -32,14 +32,14 @@ public: HandyDropZone( int _x, int _y, RGBATexture* _tex):
 
 class Handy: public Container {
 public:
-	Handy(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
+	Handy(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x00):
 	Container( _w, _h, _x, _y, angle, _tex, mode)
 	{
 	  
 		for(vector<Gesture>::iterator iter = region.gestures.begin();
 			iter != region.gestures.end(); iter++)
 		{
-			if( iter->name() == "handy" ) {
+			if( iter->name() == "move" ) {
 				region.gestures.erase(iter);
 				break;
 			}
@@ -49,32 +49,45 @@ public:
 		Gesture handy( "handy", GESTURE_FLAGS_DEFAULT|GESTURE_FLAGS_STICKY);
 
 		//
-		handy.push_back(new BlobMarker(1<<INPUT_TYPE_OBJECT));
+		handy.push_back(new BlobMarker(1<<INPUT_TYPE_FINGER));
 		
 		//
-		BlobCount* bcnt = new BlobCount(1<<INPUT_TYPE_OBJECT);
+		BlobCount* bcnt = new BlobCount(1<<INPUT_TYPE_FINGER);
 		bcnt->bounds().push_back(0);
-		bcnt->bounds().push_back(1);
+		bcnt->bounds().push_back(100);
 		handy.push_back( bcnt );
 
 		//
-		handy.push_back(new BlobPos(1<<INPUT_TYPE_OBJECT));
+		handy.push_back(new BlobPos(1<<INPUT_TYPE_FINGER));
 
 		//
 		region.gestures.push_back( handy );
 	}
 
 	void action( Gesture* gesture ) {
+
 		if( gesture->name() == "handy" ) {
 
 			FeatureBase* f = (*gesture)[1];
 			BlobCount* p = dynamic_cast<BlobCount*>(f);
 
 			if(p->result() == 1) {
+				
 				f = (*gesture)[0];
 				BlobMarker* bm = dynamic_cast<BlobMarker*>(f);
+				int markerIDtmp = bm->result();
 				
-				if(bm->markerID > 0) {
+				if(markerIDtmp > 0) {
+					
+					for(int i = 0; i < 6; i++) {
+						if(markerIDtmp == pMarkerID[i].markerID) {
+							cout << "activate marker" << endl;
+							pMarkerID[i].thread->activateMarker();
+							break;
+						}
+			
+					}
+
 					RGBATexture* texture = new RGBATexture( TISCH_PREFIX "Box.png" );
 					
 					f = (*gesture)[2];
@@ -101,26 +114,118 @@ void TcpRequestThread::setSocket(int _markerID, SOCKET _socket, sockaddr_in _fro
 	markerID = _markerID;
 	socket = _socket;
 	from = _from;
+	protocolStep = 0;
 }
 
 void TcpRequestThread::TcpRequestThreadEntryPoint() {
 	cout << "handle request" << endl;
-	// =========================================================
-	// from client
-	// =========================================================
+	while(protocolStep < 2) {
+		// =========================================================
+		// from client
+		// =========================================================
+		int in_len;
+		int recvBytes = 0;
+		char inBuffer[4];
+		//===================================================================
+		// read header as int, how many chars will come
+		recvBytes = recv(socket, inBuffer, sizeof inBuffer, MSG_WAITALL);
+	
+		// if more or less than 4 chars are received -> error was no int
+		if(recvBytes != 4) {
+			printf("Error: recv returned: %d\n", recvBytes);
+		}
+		else {
+			printf("%d %d %d %d\n", inBuffer[0], inBuffer[1], inBuffer[2], inBuffer[3]);
+		}
+	
+		memcpy(&in_len, &inBuffer, sizeof(int));
+		in_len = ntohl(in_len);
+		cout << "recvBytes: " << recvBytes << " inBuffer: " << in_len << endl;
 
-	
-	// =========================================================
-	// to client
-	// =========================================================
-	
-	char temp[512];
-	sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
-	send(socket, temp, strlen(temp), 0);
-	cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
+		//===================================================================
+		// read payload
+		char* inMsgBuffer = new char[in_len];
+		recvBytes = recv(socket, inMsgBuffer, in_len, MSG_WAITALL);
+		if(recvBytes != in_len) {
+			printf("Error: recv returned: %d\n", recvBytes);
+		}
+		else {
+			for(int i = 0; i < in_len; i++) {
+				printf("inMsgBuffer %d\n", inMsgBuffer[i]);
+			}
+		}
+
+		//protocolStep = atoi(inMsgBuffer);
+		//memcpy(&protocolStep, &inMsgBuffer, sizeof(char));
+		cout << "protocolStep: " << protocolStep << endl;
+		// compare inMsgBuffer to find protocol step
+
+		// =========================================================
+		// to client
+		// =========================================================
+		char out_len[4];
+		char* toClient;
+		int len, mID_endian;
+
+		switch(protocolStep) {
+		case 0: // requestID
+			len = htonl(4);
+			memcpy(&out_len, &len, 4);
+			send(socket, (const char*) out_len, 4, 0);
+
+			// send markerID
+			//char toClient[4];
+			toClient = new char[4];
+			mID_endian = htonl(markerID);
+			memcpy(toClient, &mID_endian, sizeof(int));
+			send(socket, (const char*)toClient, 4, 0);
+			protocolStep++;
+
+			break;
+
+		case 1: // waitForMarkerFound
+
+			/*int random_integer;  
+            random_integer = (rand()%40000)+10000;
+			
+			cout << "sleep" << endl;
+			sleep(random_integer);
+			*/
+			cout << "wait for marker" << endl;
+
+			break;	
+		}
+
+		// send length of message
+		//send(socket, (const char*) out_len, 4, 0);
+		// send payload
+		//send(socket, (const char*) toClient, 4, 0);
+
+		//char temp[512];
+		//sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
+		//send(socket, temp, strlen(temp), 0);
+		//cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
+	}
 	closesocket(socket);
 
-	cout << "done" << endl;
+	cout << "socket closed" << endl;
+}
+
+void TcpRequestThread::activateMarker() {
+	char out_len[4];
+	char* toClient;
+	int len, dummy;
+	len = htonl(4);
+	memcpy(&out_len, &len, 4);
+	send(socket, (const char*) out_len, 4, 0);
+
+	// send marker found
+	//char toClient[4];
+	toClient = new char[4];
+	dummy = htonl(1);
+	memcpy(toClient, &dummy, sizeof(int));
+	send(socket, (const char*)toClient, 4, 0);
+	protocolStep++;
 }
 
 void TcpServerThread::initNetwork() {

@@ -137,18 +137,21 @@ public class TcpClientService extends Service {
 	// API to Activity for TCP communication
 	// ------------------------------------------------------------------------
 	public void establishConnection(String ip, int port) {
+		Log.d("establishConnection", "IP: " + ip + " port: "+ port);
 		mTcpClient.setTarget(ip, port);
 
 	}
 
 	public void requestMarkerID() {
 		// requestID
-		byte[] message = new byte[] { (byte) 0x72, (byte) 0x65, (byte) 0x71,
-				(byte) 0x75, (byte) 0x65, (byte) 0x73, (byte) 0x74,
-				(byte) 0x49, (byte) 0x44 };
+//		byte[] message = new byte[] { (byte) 0x72, (byte) 0x65, (byte) 0x71,
+//				(byte) 0x75, (byte) 0x65, (byte) 0x73, (byte) 0x74,
+//				(byte) 0x49, (byte) 0x44 };
+		byte[] message = new byte[] { (byte) 0x00 };
 
 		mTcpClient.setMessage(message, 0);
-
+		mTcpClient.connectionOpen = true;
+		mTcpClient.waitForNewMessage = false;
 		Thread clientThread = new Thread(mTcpClient);
 		clientThread.start();
 
@@ -156,14 +159,14 @@ public class TcpClientService extends Service {
 
 	public void waitForMarkerFound() {
 		// waitForID
-		byte[] message = new byte[] { (byte) 0x77, (byte) 0x61, (byte) 0x69,
-				(byte) 0x74, (byte) 0x46, (byte) 0x6f, (byte) 0x72,
-				(byte) 0x49, (byte) 0x44 };
-
+//		byte[] message = new byte[] { (byte) 0x77, (byte) 0x61, (byte) 0x69,
+//				(byte) 0x74, (byte) 0x46, (byte) 0x6f, (byte) 0x72,
+//				(byte) 0x49, (byte) 0x44 };
+		byte[] message = new byte[] { (byte) 0x01 };
 		mTcpClient.setMessage(message, 1);
 
-		Thread clientThread = new Thread(mTcpClient);
-		clientThread.start();
+//		Thread clientThread = new Thread(mTcpClient);
+//		clientThread.start();
 	}
 
 	// ------------------------------------------------------------------------
@@ -174,10 +177,13 @@ public class TcpClientService extends Service {
 		int port = 0;
 		String target = null;
 		Socket clientSocket;
+		public boolean connectionOpen;
+		public boolean waitForNewMessage;
 		private DataOutputStream dos;
 		private DataInputStream dis;
-		private byte[] errorMsg = new byte[] { (byte) 0x65, (byte) 0x72,
-				(byte) 0x72, (byte) 0x6f, (byte) 0x72 };
+		private byte[] errorMsg = new byte[] { (byte) 0xFF };
+//		private byte[] errorMsg = new byte[] { (byte) 0x65, (byte) 0x72,
+//				(byte) 0x72, (byte) 0x6f, (byte) 0x72 };
 
 		byte[] toServer;
 
@@ -197,7 +203,7 @@ public class TcpClientService extends Service {
 			msg = Message.obtain();
 			msg.what = msgType;
 			toServer = message;
-
+			waitForNewMessage = false;
 		}
 
 		// ------------------------------------------------------------------------
@@ -209,7 +215,11 @@ public class TcpClientService extends Service {
 
 				initConnection();
 
-				sendMessage();
+				while(connectionOpen) {
+					while(waitForNewMessage) {}
+					sendMessage();
+				}
+				
 
 				closeConnection();
 
@@ -245,10 +255,12 @@ public class TcpClientService extends Service {
 
 			// send header
 			dos.writeInt(out_len);
+			dos.flush();
 
 			// send payload
 			if (out_len > 0) {
 				dos.write(toServer, start, out_len);
+				dos.flush();
 			}
 
 			// =========================================================
@@ -257,11 +269,12 @@ public class TcpClientService extends Service {
 			// receiver server response
 			// read header
 			int in_len = dis.readInt();
+			Log.d("from Server", "inLen: " + in_len);
 			byte[] receive_buffer = new byte[in_len];
-
+			Log.d("from Server", "recv buffer created");
 			// read payload
 			dis.readFully(receive_buffer);
-
+			Log.d("from Server", "readFully payload");
 			boolean error = true;
 			if (in_len > 0) {
 				Log.d("from Server",
@@ -276,6 +289,8 @@ public class TcpClientService extends Service {
 			} else {
 				handleTCPResponses.sendEmptyMessage(-1);
 			}
+			
+			waitForNewMessage = true;
 
 		}
 

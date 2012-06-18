@@ -8,7 +8,7 @@
 	#define _AFXDLL
 	#include <Afxwin.h>
 	#include <WinSock2.h>
-	#include <WinSock.h>
+	//#include <WinSock.h>
 	typedef int socklen_t;
 	
 #else
@@ -27,6 +27,7 @@ public:
 	int markerID;
 	SOCKET socket;
 	sockaddr_in from;
+	int protocolStep;
 
 	static UINT TcpRequestThreadStaticEntryPoint(LPVOID pThis) {
 		TcpRequestThread* pthisTcpRequest = (TcpRequestThread*) pThis;
@@ -37,6 +38,8 @@ public:
 	void setSocket(int markerID, SOCKET mySocket, sockaddr_in from);
 
 	void TcpRequestThreadEntryPoint();
+
+	void activateMarker();
 };
 
 class TcpServerThread {
