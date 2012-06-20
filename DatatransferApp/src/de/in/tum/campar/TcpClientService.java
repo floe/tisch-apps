@@ -138,6 +138,11 @@ public class TcpClientService extends Service {
 	// ------------------------------------------------------------------------
 	public void establishConnection(String ip, int port) {
 		Log.d("establishConnection", "IP: " + ip + " port: "+ port);
+		if(mTcpClient == null) {
+			Log.d("establishConnection", "client null");
+			createTcpClient();
+		}
+			
 		mTcpClient.setTarget(ip, port);
 
 	}

@@ -31,7 +31,7 @@ public class DatatransferAppActivity extends Activity {
 	private Activity mMainActivity;
 	private Context mMainContext;
 	private ComponentName mStartedService;
-	private TcpClientService mTcpClient;
+	private TcpClientService mTcpClientService;
 
 	private ProgressDialog progressDialog;
 
@@ -49,16 +49,16 @@ public class DatatransferAppActivity extends Activity {
 
 		setDisplayOrientation();
 
-		startService();
+		activateService();
 
 		new Thread() {
 			// wait until client is up, then set response handler
 			public void run() {
-				while ((mTcpClient = TcpClientService.getInstance()) == null) {
+				while ((mTcpClientService = TcpClientService.getInstance()) == null) {
 
 				}
-				mTcpClient.setResponseHandler(handleTCPResponses);
-
+				mTcpClientService.setResponseHandler(handleTCPResponses);
+				Log.d("DatatransferApp", "onCreate ResponseHandler set");
 			}
 		}.start();
 
@@ -168,7 +168,7 @@ public class DatatransferAppActivity extends Activity {
 		connect.setOnClickListener(connectToServer);
 	}
 
-	private void startService() {
+	private void activateService() {
 		Log.d("DataTransferApp", "start TCP Client Service");
 		Intent tcpService = new Intent(mMainContext, TcpClientService.class);
 		TcpClientService.setMainActivity(mMainActivity);
@@ -207,7 +207,7 @@ public class DatatransferAppActivity extends Activity {
 				intent.putExtra("markerID", markerID);
 
 				startActivity(intent);
-				mTcpClient.waitForMarkerFound();
+				mTcpClientService.waitForMarkerFound();
 				break;
 
 			case 1: // marker was found
@@ -239,9 +239,12 @@ public class DatatransferAppActivity extends Activity {
 
 			Log.d("connectToServer", "ip: " + ip);
 			Log.d("connectToServer", "port: " + port);
+			
+			if(mTcpClientService == null)
+				Log.d("connectToServer", "mTcpClientService null");
 
-			mTcpClient.establishConnection(ip, port);
-			mTcpClient.requestMarkerID();
+			mTcpClientService.establishConnection(ip, port);
+			mTcpClientService.requestMarkerID();
 
 		}
 

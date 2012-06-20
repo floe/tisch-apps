@@ -16,15 +16,19 @@
 #include "BlobCount.h"
 #include "BlobPos.h"
 
+#include "Label.h"
+#include "Motion.h"
+
 using namespace std;
 
 Window* win = 0;
 
 MarkerID* pMarkerID;
 
-class HandyDropZone: public Tile {
-public: HandyDropZone( int _x, int _y, RGBATexture* _tex):
-	Tile(100,200, _x, _y, 0, _tex, TISCH_TILE_MOVE|TISCH_TILE_SLIDE|TISCH_TILE_BOUNCE )
+class HandyDropZone: public Container {
+public:
+	HandyDropZone( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
+	Container( _w, _h, _x, _y, 0, _tex, mode )
 	{
 		shadow = true;
 	}
@@ -65,18 +69,18 @@ public:
 	}
 
 	void action( Gesture* gesture ) {
-
+		
 		if( gesture->name() == "handy" ) {
-
-			FeatureBase* f = (*gesture)[1];
+			cout << "gesture: " << gesture->name() << endl;
+			/*FeatureBase* f = (*gesture)[1];
 			BlobCount* p = dynamic_cast<BlobCount*>(f);
-
+			cout << "result: " << p->result() << endl;
 			if(p->result() == 1) {
-				
-				f = (*gesture)[0];
+			*/	
+				FeatureBase* f = (*gesture)[0];
 				BlobMarker* bm = dynamic_cast<BlobMarker*>(f);
 				int markerIDtmp = bm->result();
-				
+				cout << "MID: " << markerIDtmp << endl;
 				if(markerIDtmp > 0) {
 					
 					for(int i = 0; i < 6; i++) {
@@ -97,11 +101,46 @@ public:
 					blobPos.z = 0;
 					blobPos.normalize();
 					
-					HandyDropZone* hdz = new HandyDropZone(blobPos.x, blobPos.z, texture);
+					HandyDropZone* hdz;
+					//HandyDropZone* hdz = new HandyDropZone(150, 200, blobPos.x, blobPos.y, 0.0, texture);
+					
+					switch(markerIDtmp) {
+					case 4648:
+						hdz = new HandyDropZone(50, 100, -250, 100, 0.0, texture);
+						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
+						hdz->add( new Label("0x1228", 200, 20, 0, 30, 0, 1) );
+						break;
+					case 7236:
+						hdz = new HandyDropZone(50, 100, 0, -10, 0.0, texture);
+						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
+						hdz->add( new Label("0x1c44", 200, 20, 0, 30, 0, 1) );
+						break;
+					case 2884:
+						hdz = new HandyDropZone(50, 100, 200, -80, 0.0, texture);
+						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
+						hdz->add( new Label("0x0b44", 200, 20, 0, 30, 0, 1) );
+						break;
+					case 1680:
+						hdz = new HandyDropZone(50, 100, 200, -80, 0.0, texture);
+						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
+						hdz->add( new Label("0x0690", 200, 20, 0, 30, 0, 1) );
+						break;
+					case 90:
+						hdz = new HandyDropZone(50, 100, 200, -80, 0.0, texture);
+						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
+						hdz->add( new Label("0x005a", 200, 20, 0, 30, 0, 1) );
+						break;
+					case 626:
+						hdz = new HandyDropZone(50, 100, 200, -80, 0.0, texture);
+						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
+						hdz->add( new Label("0x0272", 200, 20, 0, 30, 0, 1) );
+						break;
+					}
+					
 					win->add(hdz);
 				}
 
-			} // if(p->result() == 1) {
+			//} // if(p->result() == 1) {
 
 		} // if( gesture->name() == "handy" ) {
 		Container::action(gesture);
@@ -347,6 +386,57 @@ void TcpServerThread::TcpServerThreadEntryPoint() {
 	exit(0);
 }
 
+class MyContainer: public Container{
+	public:
+
+		MyContainer( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
+			Container( _w,_h,_x,_y,angle,_tex,mode) 
+		{ 
+			
+			alpha = 1.0;
+			for(std::vector<Gesture>::iterator it = region.gestures.begin(); it != region.gestures.end(); it++)
+			{
+				if(it->name() == "move")
+				{
+					region.gestures.erase(it);
+					break;
+				}
+			}
+
+			Gesture move( "move" , GESTURE_FLAGS_DEFAULT|GESTURE_FLAGS_STICKY);
+
+			move.push_back(new Motion());
+			BlobCount* bcnt = new BlobCount(1<<INPUT_TYPE_FINGER);
+			bcnt->bounds().push_back( 0 );
+			bcnt->bounds().push_back( 10000 );
+			move.push_back( bcnt );
+			region.gestures.push_back( move );	
+		}
+
+		void action( Gesture* gesture ) {
+			if ( gesture->name() == "move" ) {
+				
+					FeatureBase* f = (*gesture)[1];
+					BlobCount* p = dynamic_cast<BlobCount*>(f);
+					if (p->result() == 3)
+					{
+						f = (*gesture)[0];
+						Motion* m = dynamic_cast<Motion*>(f);
+						Vector tmp = m->result();
+
+						if(tmp.y < 0) alpha -= 0.01f;
+						else alpha += 0.01f;
+						if(alpha > 1.0) alpha = 1.0;
+						else if(alpha < 0.2) alpha = 0.2;
+						color(1,1,1,alpha);
+						return;
+					}
+			}
+			Container::action(gesture);
+		}
+		double alpha;
+};
+
 int main( int argc, char* argv[] ) {
 	cout << "Datatransfer - libTISCH demo" << endl;
 	cout << "by Norbert Wiedermann (wiederma@in.tum.de) 2012" << endl;
@@ -367,6 +457,7 @@ int main( int argc, char* argv[] ) {
 	win->texture(0);
 
 	Handy* handy = new Handy( width, height );
+	handy->add( new Label("interaction area", 300, 20, 0, 120, 0, 1) );
 	win->add(handy);
 
 	win->update();
@@ -375,6 +466,22 @@ int main( int argc, char* argv[] ) {
 	TcpServerThread* server = new TcpServerThread();
 	AfxBeginThread(TcpServerThread::TcpServerThreadStaticEntryPoint, (void*)server);
 	
+	srandom(45890);
+	// load example images as textures
+	for (int i = mouse+1; i < argc; i++) {
+		RGBATexture* tmp = new RGBATexture( argv[i] );
+		MyContainer* img = new MyContainer( 
+			tmp->width(1)/5, 
+			tmp->height(1)/5,
+			(int)(((double)random()/(double)RAND_MAX)*700-350),
+			(int)(((double)random()/(double)RAND_MAX)*450-225),
+			(int)(((double)random()/(double)RAND_MAX)*360),
+			tmp, 0xFF
+		);
+		win->add( img );
+	}
+
+	win->update();
 	// keep looping on window thread
 	win->run();
 

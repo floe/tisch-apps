@@ -65,4 +65,5 @@ public:
 struct MarkerID {
 	int markerID;
 	TcpRequestThread* thread;
+
 };
