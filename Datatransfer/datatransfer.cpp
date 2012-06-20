@@ -56,10 +56,10 @@ public:
 		handy.push_back(new BlobMarker(1<<INPUT_TYPE_FINGER));
 		
 		//
-		BlobCount* bcnt = new BlobCount(1<<INPUT_TYPE_FINGER);
+		/*BlobCount* bcnt = new BlobCount(1<<INPUT_TYPE_FINGER);
 		bcnt->bounds().push_back(0);
 		bcnt->bounds().push_back(100);
-		handy.push_back( bcnt );
+		handy.push_back( bcnt );*/
 
 		//
 		handy.push_back(new BlobPos(1<<INPUT_TYPE_FINGER));
@@ -94,7 +94,7 @@ public:
 
 					RGBATexture* texture = new RGBATexture( TISCH_PREFIX "Box.png" );
 					
-					f = (*gesture)[2];
+					f = (*gesture)[1];
 					BlobPos* bp = dynamic_cast<BlobPos*>(f);
 					Vector blobPos = bp->result();
 					transform(blobPos,1);
@@ -139,12 +139,10 @@ public:
 					
 					win->add(hdz);
 				}
-
+				
 			//} // if(p->result() == 1) {
 
 		} // if( gesture->name() == "handy" ) {
-		Container::action(gesture);
-
 	} // void action( Gesture* gesture ) {
 };
 
