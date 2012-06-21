@@ -1,13 +1,5 @@
 package de.in.tum.campar;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
@@ -24,7 +16,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
 public class DatatransferAppActivity extends Activity {
 
@@ -32,6 +23,8 @@ public class DatatransferAppActivity extends Activity {
 	private Context mMainContext;
 	private ComponentName mStartedService;
 	private TcpClientService mTcpClientService;
+	private String ipTISCH;
+	private int portTISCH;
 
 	private ProgressDialog progressDialog;
 
@@ -57,7 +50,7 @@ public class DatatransferAppActivity extends Activity {
 				while ((mTcpClientService = TcpClientService.getInstance()) == null) {
 
 				}
-				mTcpClientService.setResponseHandler(handleTCPResponses);
+				mTcpClientService.setHandleTischResponses(handleTCPResponses);
 				Log.d("DatatransferApp", "onCreate ResponseHandler set");
 			}
 		}.start();
@@ -207,7 +200,9 @@ public class DatatransferAppActivity extends Activity {
 				intent.putExtra("markerID", markerID);
 
 				startActivity(intent);
-				mTcpClientService.waitForMarkerFound();
+				byte[] message = new byte[] { (byte) 0x01 };
+				int msgType = 1;
+				mTcpClientService.sendMessage(ipTISCH, portTISCH, message, msgType); // waitForMarkerFound
 				break;
 
 			case 1: // marker was found
@@ -219,7 +214,8 @@ public class DatatransferAppActivity extends Activity {
 								+ Converter.ByteArrayToHexString(markerFound));
 
 				intent = new Intent(getBaseContext(), ShowExchangeMenu.class);
-				// intent.putExtra("markerID", markerFound);
+				intent.putExtra("markerID", markerFound);
+				
 
 				startActivity(intent);
 				break;
@@ -232,19 +228,21 @@ public class DatatransferAppActivity extends Activity {
 
 		public void onClick(View v) {
 			EditText inputIP = (EditText) findViewById(R.id.ipAddress);
-			String ip = inputIP.getText().toString();
+			ipTISCH = inputIP.getText().toString();
 
 			EditText inputPort = (EditText) findViewById(R.id.port);
-			int port = Integer.parseInt(inputPort.getText().toString());
+			portTISCH = Integer.parseInt(inputPort.getText().toString());
 
-			Log.d("connectToServer", "ip: " + ip);
-			Log.d("connectToServer", "port: " + port);
+			Log.d("connectToServer", "ip: " + ipTISCH);
+			Log.d("connectToServer", "port: " + portTISCH);
 			
 			if(mTcpClientService == null)
 				Log.d("connectToServer", "mTcpClientService null");
 
-			mTcpClientService.establishConnection(ip, port);
-			mTcpClientService.requestMarkerID();
+			// requestMarkerID
+			byte[] msg = new byte[] { (byte) 0x00 };
+			int msgType = 0;
+			mTcpClientService.sendMessage(ipTISCH, portTISCH, msg, msgType);
 
 		}
 

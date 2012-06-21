@@ -14,7 +14,7 @@
         <service
             android:name="TcpClientService"
             android:enabled="true"
-            android:label="@string/tcpClientStarted" />
+            android:label="@string/tcpServiceStarted" />
 
         <activity
             android:name=".DatatransferAppActivity"
@@ -35,6 +35,14 @@
             android:name="ShowExchangeMenu"
             android:label="@string/showExchangeMenu"
             android:launchMode="singleTop" >
+
+            <!--
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            -->
         </activity>
     </application>
 
