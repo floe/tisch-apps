@@ -23,8 +23,8 @@ public class DatatransferAppActivity extends Activity {
 	private Context mMainContext;
 	private ComponentName mStartedService;
 	private TcpClientService mTcpClientService;
-	private String ipTISCH;
-	private int portTISCH;
+	public String ipTISCH;
+	public int portTISCH;
 
 	private ProgressDialog progressDialog;
 
@@ -189,6 +189,8 @@ public class DatatransferAppActivity extends Activity {
 
 				intent = new Intent(getBaseContext(), ShowExchangeMenu.class);
 				intent.putExtra("markerID", markerFound);
+				intent.putExtra("ipTISCH", ipTISCH);
+				intent.putExtra("portTISCH", portTISCH);
 
 				startActivity(intent);
 				break;

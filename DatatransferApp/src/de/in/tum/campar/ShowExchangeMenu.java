@@ -81,7 +81,7 @@ public class ShowExchangeMenu extends Activity {
 			public void onItemClick(AdapterView parent, View v, int position,
 					long id) {
 				Toast.makeText(ShowExchangeMenu.this, "" + position, Toast.LENGTH_SHORT).show();
-	            mTcpClientService.sendMessage(null, 0, new byte[] { (byte) position }, 2);
+	            mTcpClientService.sendMessage(getIntent().getStringExtra("ipTISCH"), getIntent().getIntExtra("portTISCH", 8080), new byte[] { (byte) (position+1) }, 2);
 			}
 		});
 				

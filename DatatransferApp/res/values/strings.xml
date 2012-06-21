@@ -6,7 +6,7 @@
     <string name="serverLabel">TISCH Server Adresse</string>
     <string name="portLabel">TISCH Server Port</string>
     <string name="buttonConnect">Verbinden</string>
-    <string name="serverValue">192.168.43.42</string>
+    <string name="serverValue">192.168.102.173</string>
     <string name="portValue">8080</string>
 
     <!-- TcpClient Service -->
