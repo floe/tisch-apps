@@ -90,9 +90,73 @@ void TcpRequestThread::setSocket(int _markerID, SOCKET _socket, sockaddr_in _fro
 	markerID = _markerID;
 	socket = _socket;
 	from = _from;
-	protocolStep = 0;
 }
 
+void TcpRequestThread::TcpRequestThreadEntryPoint() {
+	cout << "handle request" << endl;
+	// =========================================================
+	// from client
+	// =========================================================
+	int in_len;
+	int recvBytes = 0;
+	char inBuffer[4];
+	//===================================================================
+	// read header as int, how many chars will come
+	recvBytes = recv(socket, inBuffer, sizeof inBuffer, MSG_WAITALL);
+	
+	// if more or less than 4 chars are received -> error was no int
+	if(recvBytes != 4) {
+		printf("Error: recv returned: %d\n", recvBytes);
+	}
+	else {
+		printf("%d %d %d %d\n", inBuffer[0], inBuffer[1], inBuffer[2], inBuffer[3]);
+	}
+	
+	memcpy(&in_len, &inBuffer, sizeof(int));
+	in_len = ntohl(in_len);
+	cout << "recvBytes: " << recvBytes << " inBuffer: " << in_len << endl;
+
+	//===================================================================
+	// read payload
+	char* inMsgBuffer = new char[in_len];
+	recvBytes = recv(socket, inMsgBuffer, in_len, MSG_WAITALL);
+	if(recvBytes != in_len) {
+		printf("Error: recv returned: %d\n", recvBytes);
+	}
+	else {
+		for(int i = 0; i < in_len; i++) {
+			printf("inMsgBuffer %d\n", inMsgBuffer[i]);
+		}
+	}
+
+	// =========================================================
+	// to client
+	// =========================================================
+	char out_len[4];
+	char* toClient;
+	int len, mID_endian;
+
+	len = htonl(4);
+	memcpy(&out_len, &len, 4);
+	send(socket, (const char*) out_len, 4, 0);
+
+	// send markerID
+	//char toClient[4];
+	toClient = new char[4];
+	mID_endian = htonl(markerID);
+	memcpy(toClient, &mID_endian, sizeof(int));
+	send(socket, (const char*)toClient, 4, 0);
+
+	//char temp[512];
+	//sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
+	//send(socket, temp, strlen(temp), 0);
+	//cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
+	
+	closesocket(socket);
+
+	cout << "socket closed" << endl;
+}
+/*
 void TcpRequestThread::TcpRequestThreadEntryPoint() {
 	cout << "handle request" << endl;
 	while(protocolStep < 2) {
@@ -166,7 +230,7 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 			
 			cout << "sleep" << endl;
 			sleep(random_integer);
-			*/
+			
 			cout << "wait for marker" << endl;
 
 			break;	
@@ -185,10 +249,116 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 	closesocket(socket);
 
 	cout << "socket closed" << endl;
+}*/
+
+void SendToMobile::connectToMobile() {
+	
+	WSADATA wsaData;
+	
+	int wsaret = WSAStartup(MAKEWORD(2,2), &wsaData);
+	if(wsaret != 0) {
+		cout << endl << "WSAStartup failed" << endl;
+		exit(5);
+	}
+
+	mobileSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if(mobileSocket == INVALID_SOCKET) {
+		cout << endl << "socket() failed" << endl;
+#ifdef _MSC_VER
+		WSACleanup();
+#endif
+		exit(6);
+	}
+
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = mobileIP;
+	serv_addr.sin_port = htons(mobilePort);
+
+	if(connect(mobileSocket, (sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
+		cout << endl << "sconnect() failed" << endl;
+#ifdef _MSC_VER
+		WSACleanup();
+#endif
+		exit(7);
+	}
+}
+
+void SendToMobile::SendToMobileEntryPoint() {
+	cout << "send msg to mobile" << endl;
+
+	connectToMobile();
+
+	// =========================================================
+	// to mobile
+	// =========================================================
+	// prepare header
+	int len;
+	char out_len[4];	// holds int describing length of message
+	len = htonl(4);		// send 4 char
+	memcpy(&out_len, &len, 4);
+	// send header: 
+	send(mobileSocket, (const char*) out_len, 4, 0);
+
+	// prepare payload
+	char toMobile[4];
+	messageToMobile = htonl(messageToMobile);
+	memcpy(toMobile, &messageToMobile, sizeof(int));
+	// send payload
+	send(mobileSocket, (const char*) toMobile, 4, 0);
+
+	// =========================================================
+	// receive ack
+	// =========================================================
+	// read header
+	int in_len;
+	int recvBytes = 0;
+	char inBuffer[4];
+	
+	recvBytes = recv(mobileSocket, inBuffer, sizeof inBuffer, MSG_WAITALL);
+	// if more or less than 4 chars are received -> error was no int
+	if(recvBytes != 4) {
+		printf("Error: recv returned: %d\n", recvBytes);
+	}
+	else {
+		printf("%d %d %d %d\n", inBuffer[0], inBuffer[1], inBuffer[2], inBuffer[3]);
+	}
+	memcpy(&in_len, &inBuffer, sizeof(int));
+	in_len = ntohl(in_len);
+	cout << "recvBytes: " << recvBytes << " inBuffer: " << in_len << endl;
+			
+	// =========================================================
+	// read payload
+
+	char* inMessage = new char[in_len];
+	recvBytes = recv(mobileSocket, inMessage, in_len, MSG_WAITALL);
+	if(recvBytes != in_len) {
+		printf("Error: recv returned: %d\n", recvBytes);
+	}
+	else {
+		for(int i = 0; i < in_len; i++) {
+			printf("inMsgBuffer %d\n", inMessage[i]);
+		}
+	}
+
+	// =========================================================
+	// finish, close
+
+	closesocket(mobileSocket);
+	cout << "socket to Mobile closed" << endl;
+	delete inMessage;
+}
+
+void SendToMobile::sendMessageToMobile(int msg) {
+	messageToMobile = msg;
 }
 
 void TcpRequestThread::activateMarker() {
-	char out_len[4];
+	// prepare message to send to mobile and start thread
+	SendToMobile* msgToMobile = new SendToMobile();
+	msgToMobile->sendMessageToMobile(1);
+	AfxBeginThread(SendToMobile::SendToMobileStaticEntryPoint, (void*)msgToMobile);
+
+	/*char out_len[4];
 	char* toClient;
 	int len, dummy;
 	len = htonl(4);
@@ -201,7 +371,7 @@ void TcpRequestThread::activateMarker() {
 	dummy = htonl(1);
 	memcpy(toClient, &dummy, sizeof(int));
 	send(socket, (const char*)toClient, 4, 0);
-	protocolStep++;
+	protocolStep++;*/
 }
 
 void TcpServerThread::initNetwork() {
@@ -217,7 +387,7 @@ void TcpServerThread::initNetwork() {
 
 	local.sin_family = AF_INET;
 	local.sin_addr.s_addr = INADDR_ANY;
-	local.sin_port = htons(PORT);
+	local.sin_port = htons(listenPort);
 
 	ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
 

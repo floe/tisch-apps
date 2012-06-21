@@ -27,7 +27,6 @@ public:
 	int markerID;
 	SOCKET socket;
 	sockaddr_in from;
-	int protocolStep;
 
 	static UINT TcpRequestThreadStaticEntryPoint(LPVOID pThis) {
 		TcpRequestThread* pthisTcpRequest = (TcpRequestThread*) pThis;
@@ -36,23 +35,23 @@ public:
 	}
 
 	void setSocket(int markerID, SOCKET mySocket, sockaddr_in from);
+	
+	void activateMarker();
 
 	void TcpRequestThreadEntryPoint();
-
-	void activateMarker();
 };
 
 class TcpServerThread {
 public:
 	SOCKET AcceptSocket;
 	SOCKET ListenSocket;
-	int PORT;
+	int listenPort;
 	sockaddr_in local;
 	sockaddr_in from;
 
 	static  UINT TcpServerThreadStaticEntryPoint(LPVOID pThis) {
 		TcpServerThread* pthisTcpServer = (TcpServerThread*)pThis;
-		pthisTcpServer->PORT = 8080;
+		pthisTcpServer->listenPort = 8080;
 		pthisTcpServer->TcpServerThreadEntryPoint();
 		return 0;
 	}
@@ -62,4 +61,24 @@ public:
 	void TcpServerThreadEntryPoint();
 };
 
+class SendToMobile {
+public:
+	sockaddr_in serv_addr;
+	SOCKET mobileSocket;
+	int mobilePort;
+	ULONG mobileIP;
+	int messageToMobile;
 
+	static UINT SendToMobileStaticEntryPoint(LPVOID pThis) {
+		SendToMobile* pthisSendToMobile = (SendToMobile*) pThis;
+		pthisSendToMobile->SendToMobileEntryPoint();
+		return 1;
+	}
+
+	void connectToMobile();
+
+	void SendToMobileEntryPoint();
+
+	void sendMessageToMobile(int msg);
+
+};
