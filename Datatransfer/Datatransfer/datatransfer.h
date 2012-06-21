@@ -34,7 +34,7 @@ public:
 		return 1;
 	}
 
-	void setSocket(int markerID, SOCKET mySocket, sockaddr_in from);
+	void setSocket(SOCKET mySocket, sockaddr_in from);
 	
 	void activateMarker(int markerID);
 

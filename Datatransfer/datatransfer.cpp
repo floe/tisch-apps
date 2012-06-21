@@ -43,6 +43,35 @@ Window* win = 0;
 
 std::map<int, MarkerID> markers;
 
+RGBATexture* textures[3];
+
+class MyImage: public Container {
+public:
+    MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
+    Container( _w, _h, _x, _y, angle, _tex, mode)
+    {}
+
+    void action( Gesture* gesture ) {
+		if( gesture->name() == "release" )
+		{
+			for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
+				if(it->second.hdz == NULL)
+					continue;
+				if((x > it->second.hdz->x - ( 0.5f * it->second.hdz->w)) && (x < it->second.hdz->x + ( 0.5f * it->second.hdz->w)))
+				{
+					if((y > it->second.hdz->y - ( 0.5f * it->second.hdz->h)) && (y < it->second.hdz->y + ( 0.5f * it->second.hdz->h)))
+					{
+						//send "texture" to phone
+						std::cout << "Copy me to " << it->first << std::endl;
+						break;
+					}
+				}
+			}
+		}
+        else
+            Container::action(gesture);
+    }
+}; 
 
 class Handy: public Container {
 public:
@@ -77,7 +106,7 @@ public:
 				blobPos.z = 0;
 				blobPos.normalize();
 				cout << "BlobPos: " << blobPos.x << " " << blobPos.y << endl;
-				markers[markerIDtmp].hdz = new HandyDropZone(150, 200, blobPos.x * win->getWidth() * 0.5f, blobPos.y * win->getHeight() * 0.5f, 0.0, texture);
+				markers[markerIDtmp].hdz = new HandyDropZone(150, 200, blobPos.x * win->getWidth() * 0.5f, blobPos.y * win->getHeight() * 0.5f, 0.0, new RGBATexture( "handy.png" ));
 				markers[markerIDtmp].active = true;
 
 				win->add(markers[markerIDtmp].hdz);
@@ -86,9 +115,20 @@ public:
 	} // void action( Gesture* gesture )
 };
 
-void TcpRequestThread::setSocket(int _markerID, SOCKET _socket, sockaddr_in _from) {
+void showImage(int markerID, int i)
+{	
+	MyImage* img = new MyImage( 
+		200,//tmp->width(1)/5, 
+		100, //tmp->height(1)/5,
+		markers[markerID].hdz->x ,
+		markers[markerID].hdz->y < 0 ? markers[markerID].hdz->y + markers[markerID].hdz->h : markers[markerID].hdz->y - markers[markerID].hdz->h,
+		0,
+		textures[i-1], 0x05
+	);
+	win->add( img );
+}
 
-	markerID = _markerID;
+void TcpRequestThread::setSocket(SOCKET _socket, sockaddr_in _from) {
 	socket = _socket;
 	from = _from;
 }
@@ -130,22 +170,69 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 		}
 	}
 
-	// =========================================================
-	// to client
-	// =========================================================
-	// prepare header
-	char out_len[4];
-	int len, mID_endian;
+	//Marker requested
+	if( (int)inMsgBuffer[0] == 0 )
+	{
+		int useMarkerID = -1;
 
-	len = htonl(4); // send 4 char (1 int) network byte order
-	memcpy(&out_len, &len, 4);
-	send(socket, (const char*) out_len, 4, 0);
+		for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
+			if(it->second.connectInfoMobile.sin_addr.S_un.S_addr == NULL) {
+				useMarkerID = it->first;
+				break;
+			}
+		}
 
-	// send markerID
-	char toClient[4];
-	mID_endian = htonl(markerID); // change to network byte order
-	memcpy(&toClient, &mID_endian, sizeof(int));
-	send(socket, (const char*) toClient, 4, 0);
+		if(useMarkerID == -1) {
+			cout << "no marker ID left, try later again" << endl;
+			closesocket(socket);
+		}
+
+		markers[useMarkerID].connectInfoMobile = from;
+
+		// =========================================================
+		// to client
+		// =========================================================
+		// prepare header
+		char out_len[4];
+		int len, mID_endian;
+
+		len = htonl(4); // send 4 char (1 int) network byte order
+		memcpy(&out_len, &len, 4);
+		send(socket, (const char*) out_len, 4, 0);
+
+		// send markerID
+		char toClient[4];
+		mID_endian = htonl(useMarkerID); // change to network byte order
+		memcpy(&toClient, &mID_endian, sizeof(int));
+		send(socket, (const char*) toClient, 4, 0);
+	}
+
+	else
+	{
+		for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
+			if(it->second.connectInfoMobile.sin_addr.S_un.S_addr == from.sin_addr.S_un.S_addr) {
+				showImage(it->first, (int)inMsgBuffer[0]);
+				break;
+			}
+		}
+
+		// =========================================================
+		// to client
+		// =========================================================
+		// prepare header
+		char out_len[4];
+		int len, mID_endian;
+
+		len = htonl(4); // send 4 char (1 int) network byte order
+		memcpy(&out_len, &len, 4);
+		send(socket, (const char*) out_len, 4, 0);
+
+		// send markerID
+		char toClient[4];
+		mID_endian = htonl(0); // change to network byte order
+		memcpy(&toClient, &mID_endian, sizeof(int));
+		send(socket, (const char*) toClient, 4, 0);
+	}
 
 	//char temp[512];
 	//sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
@@ -156,100 +243,6 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 
 	cout << "socket closed" << endl;
 }
-/*
-void TcpRequestThread::TcpRequestThreadEntryPoint() {
-	cout << "handle request" << endl;
-	while(protocolStep < 2) {
-		// =========================================================
-		// from client
-		// =========================================================
-		int in_len;
-		int recvBytes = 0;
-		char inBuffer[4];
-		//===================================================================
-		// read header as int, how many chars will come
-		recvBytes = recv(socket, inBuffer, sizeof inBuffer, MSG_WAITALL);
-	
-		// if more or less than 4 chars are received -> error was no int
-		if(recvBytes != 4) {
-			printf("Error: recv returned: %d\n", recvBytes);
-		}
-		else {
-			printf("%d %d %d %d\n", inBuffer[0], inBuffer[1], inBuffer[2], inBuffer[3]);
-		}
-	
-		memcpy(&in_len, &inBuffer, sizeof(int));
-		in_len = ntohl(in_len);
-		cout << "recvBytes: " << recvBytes << " inBuffer: " << in_len << endl;
-
-		//===================================================================
-		// read payload
-		char* inMsgBuffer = new char[in_len];
-		recvBytes = recv(socket, inMsgBuffer, in_len, MSG_WAITALL);
-		if(recvBytes != in_len) {
-			printf("Error: recv returned: %d\n", recvBytes);
-		}
-		else {
-			for(int i = 0; i < in_len; i++) {
-				printf("inMsgBuffer %d\n", inMsgBuffer[i]);
-			}
-		}
-
-		//protocolStep = atoi(inMsgBuffer);
-		//memcpy(&protocolStep, &inMsgBuffer, sizeof(char));
-		cout << "protocolStep: " << protocolStep << endl;
-		// compare inMsgBuffer to find protocol step
-
-		// =========================================================
-		// to client
-		// =========================================================
-		char out_len[4];
-		char* toClient;
-		int len, mID_endian;
-
-		switch(protocolStep) {
-		case 0: // requestID
-			len = htonl(4);
-			memcpy(&out_len, &len, 4);
-			send(socket, (const char*) out_len, 4, 0);
-
-			// send markerID
-			//char toClient[4];
-			toClient = new char[4];
-			mID_endian = htonl(markerID);
-			memcpy(toClient, &mID_endian, sizeof(int));
-			send(socket, (const char*)toClient, 4, 0);
-			protocolStep++;
-
-			break;
-
-		case 1: // waitForMarkerFound
-
-			/*int random_integer;  
-            random_integer = (rand()%40000)+10000;
-			
-			cout << "sleep" << endl;
-			sleep(random_integer);
-			
-			cout << "wait for marker" << endl;
-
-			break;	
-		}
-
-		// send length of message
-		//send(socket, (const char*) out_len, 4, 0);
-		// send payload
-		//send(socket, (const char*) toClient, 4, 0);
-
-		//char temp[512];
-		//sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
-		//send(socket, temp, strlen(temp), 0);
-		//cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
-	}
-	closesocket(socket);
-
-	cout << "socket closed" << endl;
-}*/
 
 void SendToMobile::connectToMobile() {
 	
@@ -359,21 +352,6 @@ void TcpRequestThread::activateMarker(int markerID) {
 	msgToMobile->mobileIP = markers[markerID].connectInfoMobile.sin_addr.S_un.S_addr;
 	msgToMobile->mobilePort = 8080;
 	AfxBeginThread(SendToMobile::SendToMobileStaticEntryPoint, (void*)msgToMobile);
-
-	/*char out_len[4];
-	char* toClient;
-	int len, dummy;
-	len = htonl(4);
-	memcpy(&out_len, &len, 4);
-	send(socket, (const char*) out_len, 4, 0);
-
-	// send marker found
-	//char toClient[4];
-	toClient = new char[4];
-	dummy = htonl(1);
-	memcpy(toClient, &dummy, sizeof(int));
-	send(socket, (const char*)toClient, 4, 0);
-	protocolStep++;*/
 }
 
 void TcpServerThread::initNetwork() {
@@ -443,38 +421,9 @@ void TcpServerThread::TcpServerThreadEntryPoint() {
 			exit(5);
 		}
 
-		int useMarkerID = -1;
-
-		for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
-			if(it->second.thread == NULL) {
-				useMarkerID = it->first;
-				break;
-			}
-		}
-
-		if(useMarkerID == -1) {
-			cout << "no marker ID left, try later again" << endl;
-			closesocket(AcceptSocket);
-		}
-		else {
-			pair<int, SOCKET> connection;
-			connection.first = useMarkerID;
-			connection.second = AcceptSocket;
-			openConnections.insert(connection);
-
-			cout << "used iD: " << useMarkerID << endl;
-
-			TcpRequestThread* request = new TcpRequestThread();
-			markers[useMarkerID].thread = request;
-			markers[useMarkerID].connectInfoMobile = from;
-			request->setSocket(connection.first, connection.second, from);
-			AfxBeginThread(TcpRequestThread::TcpRequestThreadStaticEntryPoint, (void*)request);
-		}
-		//char temp[512];
-		//sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
-		//send(AcceptSocket, temp, strlen(temp), 0);
-		//cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
-		//closesocket(AcceptSocket);
+		TcpRequestThread* request = new TcpRequestThread();
+		request->setSocket(AcceptSocket, from);
+		AfxBeginThread(TcpRequestThread::TcpRequestThreadStaticEntryPoint, (void*)request);
 
 	} // while(true)
 
@@ -484,34 +433,6 @@ void TcpServerThread::TcpServerThreadEntryPoint() {
 #endif
 	exit(0);
 }
-
-class MyImage: public Container {
-public:
-    MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
-    Container( _w, _h, _x, _y, angle, _tex, mode)
-    {}
-
-    void action( Gesture* gesture ) {
-		if( gesture->name() == "release" )
-		{
-			for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
-				if(it->second.hdz == NULL)
-					continue;
-				if((x > it->second.hdz->x - ( 0.5f * it->second.hdz->w)) && (x < it->second.hdz->x + ( 0.5f * it->second.hdz->w)))
-				{
-					if((y > it->second.hdz->y - ( 0.5f * it->second.hdz->h)) && (y < it->second.hdz->y + ( 0.5f * it->second.hdz->h)))
-					{
-						//send "texture" to phone
-						std::cout << "Copy me to " << it->first << std::endl;
-						break;
-					}
-				}
-			}
-		}
-        else
-            Container::action(gesture);
-    }
-}; 
 
 int main( int argc, char* argv[] ) {
 	cout << "Datatransfer - libTISCH demo" << endl;
@@ -557,6 +478,11 @@ int main( int argc, char* argv[] ) {
 		win->add( img );
 	}
 
+	
+	textures[0] = new RGBATexture( "img00042.png" );
+	textures[1] = new RGBATexture( "img00052.png");
+	textures[2] = new RGBATexture( "img00054.png" );
+	
 	win->update();
 	// keep looping on window thread
 	win->run();
