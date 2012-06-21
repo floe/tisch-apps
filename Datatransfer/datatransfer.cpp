@@ -16,55 +16,41 @@
 #include "BlobCount.h"
 #include "BlobPos.h"
 
+#include "Window.h"
 #include "Label.h"
 #include "Motion.h"
 
 using namespace std;
 
-Window* win = 0;
-
-MarkerID* pMarkerID;
-
 class HandyDropZone: public Container {
 public:
-	HandyDropZone( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
+	HandyDropZone( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x05):
 	Container( _w, _h, _x, _y, 0, _tex, mode )
 	{
 		shadow = true;
 	}
 };
 
+struct MarkerID {
+	int markerID;
+	TcpRequestThread* thread;
+	bool active;
+	HandyDropZone* hdz;
+};
+
+Window* win = 0;
+
+std::map<int, MarkerID> markers;
+
+
 class Handy: public Container {
 public:
 	Handy(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x00):
 	Container( _w, _h, _x, _y, angle, _tex, mode)
 	{
-	  
-		for(vector<Gesture>::iterator iter = region.gestures.begin();
-			iter != region.gestures.end(); iter++)
-		{
-			if( iter->name() == "move" ) {
-				region.gestures.erase(iter);
-				break;
-			}
-
-		}
-
 		Gesture handy( "handy", GESTURE_FLAGS_DEFAULT|GESTURE_FLAGS_STICKY);
-
-		//
 		handy.push_back(new BlobMarker(1<<INPUT_TYPE_FINGER));
-		
-		//
-		/*BlobCount* bcnt = new BlobCount(1<<INPUT_TYPE_FINGER);
-		bcnt->bounds().push_back(0);
-		bcnt->bounds().push_back(100);
-		handy.push_back( bcnt );*/
-
-		//
 		handy.push_back(new BlobPos(1<<INPUT_TYPE_FINGER));
-
-		//
 		region.gestures.push_back( handy );
 	}
 
@@ -72,78 +58,31 @@ public:
 		
 		if( gesture->name() == "handy" ) {
 			cout << "gesture: " << gesture->name() << endl;
-			/*FeatureBase* f = (*gesture)[1];
-			BlobCount* p = dynamic_cast<BlobCount*>(f);
-			cout << "result: " << p->result() << endl;
-			if(p->result() == 1) {
-			*/	
-				FeatureBase* f = (*gesture)[0];
-				BlobMarker* bm = dynamic_cast<BlobMarker*>(f);
-				int markerIDtmp = bm->result();
-				cout << "MID: " << markerIDtmp << endl;
-				if(markerIDtmp > 0) {
+			FeatureBase* f = (*gesture)[0];
+			BlobMarker* bm = dynamic_cast<BlobMarker*>(f);
+			int markerIDtmp = bm->result();
+			cout << "MID: " << markerIDtmp << endl;
+			if(markerIDtmp > 0 && !markers[markerIDtmp].active) {
 					
-					for(int i = 0; i < 6; i++) {
-						if(markerIDtmp == pMarkerID[i].markerID) {
-							cout << "activate marker" << endl;
-							pMarkerID[i].thread->activateMarker();
-							break;
-						}
-			
-					}
+				markers[markerIDtmp].thread->activateMarker();
 
-					RGBATexture* texture = new RGBATexture( TISCH_PREFIX "Box.png" );
+				RGBATexture* texture = new RGBATexture( TISCH_PREFIX "Box.png" );
 					
-					f = (*gesture)[1];
-					BlobPos* bp = dynamic_cast<BlobPos*>(f);
-					Vector blobPos = bp->result();
-					transform(blobPos,1);
-					blobPos.z = 0;
-					blobPos.normalize();
-					
-					HandyDropZone* hdz;
-					//HandyDropZone* hdz = new HandyDropZone(150, 200, blobPos.x, blobPos.y, 0.0, texture);
-					
-					switch(markerIDtmp) {
-					case 4648:
-						hdz = new HandyDropZone(50, 100, -250, 100, 0.0, texture);
-						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
-						hdz->add( new Label("0x1228", 200, 20, 0, 30, 0, 1) );
-						break;
-					case 7236:
-						hdz = new HandyDropZone(50, 100, 0, -10, 0.0, texture);
-						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
-						hdz->add( new Label("0x1c44", 200, 20, 0, 30, 0, 1) );
-						break;
-					case 2884:
-						hdz = new HandyDropZone(50, 100, 200, -80, 0.0, texture);
-						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
-						hdz->add( new Label("0x0b44", 200, 20, 0, 30, 0, 1) );
-						break;
-					case 1680:
-						hdz = new HandyDropZone(50, 100, 200, -80, 0.0, texture);
-						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
-						hdz->add( new Label("0x0690", 200, 20, 0, 30, 0, 1) );
-						break;
-					case 90:
-						hdz = new HandyDropZone(50, 100, 200, -80, 0.0, texture);
-						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
-						hdz->add( new Label("0x005a", 200, 20, 0, 30, 0, 1) );
-						break;
-					case 626:
-						hdz = new HandyDropZone(50, 100, 200, -80, 0.0, texture);
-						hdz->add( new Label("DropZone", 200, 20, 0, 50, 0, 1) );
-						hdz->add( new Label("0x0272", 200, 20, 0, 30, 0, 1) );
-						break;
-					}
-					
-					win->add(hdz);
-				}
-				
-			//} // if(p->result() == 1) {
+				f = (*gesture)[1];
+				BlobPos* bp = dynamic_cast<BlobPos*>(f);
+				Vector blobPos = bp->result();
+				cout << "BlobPos: " << blobPos.x << " " << blobPos.y << endl;
+				transform(blobPos,1);
+				blobPos.z = 0;
+				blobPos.normalize();
+				cout << "BlobPos: " << blobPos.x << " " << blobPos.y << endl;
+				markers[markerIDtmp].hdz = new HandyDropZone(150, 200, blobPos.x * win->getWidth() * 0.5f, blobPos.y * win->getHeight() * 0.5f, 0.0, texture);
+				markers[markerIDtmp].active = true;
 
-		} // if( gesture->name() == "handy" ) {
-	} // void action( Gesture* gesture ) {
+				win->add(markers[markerIDtmp].hdz);
+			}
+		} // if( gesture->name() == "handy" )
+	} // void action( Gesture* gesture )
 };
 
 void TcpRequestThread::setSocket(int _markerID, SOCKET _socket, sockaddr_in _from) {
@@ -334,14 +273,11 @@ void TcpServerThread::TcpServerThreadEntryPoint() {
 
 		int useMarkerID = -1;
 
-		for(int i = 0; i < 6; i++) {
-			if(pMarkerID[i].thread == NULL) {
-				// use this ID no thread attached
-				useMarkerID = pMarkerID[i].markerID;
-
+		for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
+			if(it->second.thread == NULL) {
+				useMarkerID = it->first;
 				break;
 			}
-			
 		}
 
 		if(useMarkerID == -1) {
@@ -358,13 +294,7 @@ void TcpServerThread::TcpServerThreadEntryPoint() {
 
 			TcpRequestThread* request = new TcpRequestThread();
 
-			for(int i = 0; i < 6; i++) {
-				if(useMarkerID == pMarkerID[i].markerID) {
-					pMarkerID[i].thread = request;
-					break;
-				}
-			
-			}
+			markers[useMarkerID].thread = request;
 		
 			request->setSocket(connection.first, connection.second, from);
 			AfxBeginThread(TcpRequestThread::TcpRequestThreadStaticEntryPoint, (void*)request);
@@ -384,73 +314,50 @@ void TcpServerThread::TcpServerThreadEntryPoint() {
 	exit(0);
 }
 
-class MyContainer: public Container{
-	public:
+class MyImage: public Container {
+public:
+    MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
+    Container( _w, _h, _x, _y, angle, _tex, mode)
+    {}
 
-		MyContainer( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
-			Container( _w,_h,_x,_y,angle,_tex,mode) 
-		{ 
-			
-			alpha = 1.0;
-			for(std::vector<Gesture>::iterator it = region.gestures.begin(); it != region.gestures.end(); it++)
-			{
-				if(it->name() == "move")
+    void action( Gesture* gesture ) {
+		if( gesture->name() == "release" )
+		{
+			for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
+				if(it->second.hdz == NULL)
+					continue;
+				if((x > it->second.hdz->x - ( 0.5f * it->second.hdz->w)) && (x < it->second.hdz->x + ( 0.5f * it->second.hdz->w)))
 				{
-					region.gestures.erase(it);
-					break;
+					if((y > it->second.hdz->y - ( 0.5f * it->second.hdz->h)) && (y < it->second.hdz->y + ( 0.5f * it->second.hdz->h)))
+					{
+						//send "texture" to phone
+						std::cout << "Copy me to " << it->first << std::endl;
+						break;
+					}
 				}
 			}
-
-			Gesture move( "move" , GESTURE_FLAGS_DEFAULT|GESTURE_FLAGS_STICKY);
-
-			move.push_back(new Motion());
-			BlobCount* bcnt = new BlobCount(1<<INPUT_TYPE_FINGER);
-			bcnt->bounds().push_back( 0 );
-			bcnt->bounds().push_back( 10000 );
-			move.push_back( bcnt );
-			region.gestures.push_back( move );	
 		}
-
-		void action( Gesture* gesture ) {
-			if ( gesture->name() == "move" ) {
-				
-					FeatureBase* f = (*gesture)[1];
-					BlobCount* p = dynamic_cast<BlobCount*>(f);
-					if (p->result() == 3)
-					{
-						f = (*gesture)[0];
-						Motion* m = dynamic_cast<Motion*>(f);
-						Vector tmp = m->result();
-
-						if(tmp.y < 0) alpha -= 0.01f;
-						else alpha += 0.01f;
-						if(alpha > 1.0) alpha = 1.0;
-						else if(alpha < 0.2) alpha = 0.2;
-						color(1,1,1,alpha);
-						return;
-					}
-			}
-			Container::action(gesture);
-		}
-		double alpha;
-};
+        else
+            Container::action(gesture);
+    }
+}; 
 
 int main( int argc, char* argv[] ) {
 	cout << "Datatransfer - libTISCH demo" << endl;
 	cout << "by Norbert Wiedermann (wiederma@in.tum.de) 2012" << endl;
 
-	pMarkerID = new MarkerID[6];
-	pMarkerID[0].markerID = 4648; pMarkerID[0].thread = NULL; // 1228
-	pMarkerID[1].markerID = 7236; pMarkerID[1].thread = NULL; // 1c44
-	pMarkerID[2].markerID = 2884; pMarkerID[2].thread = NULL; // 0b44
-	pMarkerID[3].markerID = 1680; pMarkerID[3].thread = NULL; // 0690
-	pMarkerID[4].markerID = 90;   pMarkerID[4].thread = NULL; // 005a
-	pMarkerID[5].markerID = 626 ; pMarkerID[5].thread = NULL; // 0272
+	markers[4648].active = false; // 1228
+	markers[7236].active = false; // 1c44
+	markers[2884].active = false; // 0b44
+	markers[1680].active = false; // 0690
+	markers[  90].active = false; // 005a
+	markers[ 626].active = false; // 0272
 	
 	int width = 640;
 	int height = 480;
 
 	int mouse = ((argc > 1) && (std::string("-m") == argv[1]));
+	mouse = 0;
 	win = new Window( width, height, "Datatransfer", mouse );
 	win->texture(0);
 
@@ -468,7 +375,7 @@ int main( int argc, char* argv[] ) {
 	// load example images as textures
 	for (int i = mouse+1; i < argc; i++) {
 		RGBATexture* tmp = new RGBATexture( argv[i] );
-		MyContainer* img = new MyContainer( 
+		MyImage* img = new MyImage( 
 			tmp->width(1)/5, 
 			tmp->height(1)/5,
 			(int)(((double)random()/(double)RAND_MAX)*700-350),

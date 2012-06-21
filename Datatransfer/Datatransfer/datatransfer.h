@@ -62,8 +62,4 @@ public:
 	void TcpServerThreadEntryPoint();
 };
 
-struct MarkerID {
-	int markerID;
-	TcpRequestThread* thread;
 
-};
