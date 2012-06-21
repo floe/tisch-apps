@@ -94,7 +94,6 @@ public class TcpClientService extends Service {
 
 		return START_STICKY;
 	}
-	
 
 	@Override
 	public void onDestroy() {
@@ -106,21 +105,17 @@ public class TcpClientService extends Service {
 		nNM.cancel(NOTIFICATION);
 		super.onDestroy();
 	}
-	
 
 	// ------------------------------------------------------------------------
 	// set service in connection with calling Activity
 	// ------------------------------------------------------------------------
-
 	public static void setMainActivity(Activity activity) {
 		mMainActivity = activity;
 	}
-	
 
 	public static void setMainContext(Context context) {
 		mContext = context;
 	}
-	
 
 	// ------------------------------------------------------------------------
 	// show a notification while the service is running
@@ -139,7 +134,6 @@ public class TcpClientService extends Service {
 
 		nNM.notify(NOTIFICATION, notification);
 	}
-	
 
 	// ------------------------------------------------------------------------
 	//
@@ -147,7 +141,7 @@ public class TcpClientService extends Service {
 	public void setHandleTischResponses(Handler mHandler) {
 		handleTischResponses = mHandler;
 	}
-	
+
 	public void setHandleTischRequests(Handler mHandler) {
 		handleTischRequests = mHandler;
 	}
@@ -183,7 +177,6 @@ public class TcpClientService extends Service {
 	// ------------------------------------------------------------------------
 	// server thread to handle messages from TISCH
 	// ------------------------------------------------------------------------
-	// TcpServer is a singleton
 	public class TcpServer implements Runnable {
 
 		private ServerSocket serverSocket = null;
@@ -312,8 +305,9 @@ public class TcpClientService extends Service {
 
 			mBundle.putByteArray("TischMSG", receive_buffer);
 			msg.setData(mBundle);
+			msg.what = 1;
 			handleTischRequests.sendMessage(msg);
-			
+
 			// =========================================================
 			// send ack to TISCH
 			// =========================================================
@@ -341,20 +335,7 @@ public class TcpClientService extends Service {
 
 		}
 
-		private void prepareIntentForBroadcastReceiver(byte[] data) {
-			Log.d("TcpRequest", "prepare Intent for BroadcastReceiver");
-
-			Intent intent = new Intent();
-			// intent.setAction();
-			// intent.putExtra("fuzzingData", data);
-
-			Log.d("TcpRequest", "broadcasting Intent");
-
-			sendBroadcast(intent);
-		}
-
 	}
-	
 
 	// ------------------------------------------------------------------------
 	// handle send request to TISCH
@@ -438,7 +419,7 @@ public class TcpClientService extends Service {
 			}
 
 			// =========================================================
-			// receive ack from server
+			// from server
 			// =========================================================
 			// read header
 			int in_len = dis.readInt();
@@ -449,21 +430,27 @@ public class TcpClientService extends Service {
 			// read payload
 			dis.readFully(receive_buffer);
 
-			// verify read data
-			boolean error = true;
-			if (in_len > 0) {
-				Log.d("from Server",
-						Converter.ByteArrayToHexString(receive_buffer));
-				error = Arrays.equals(receive_buffer, errorMsg);
-			}
+			Log.d("from Server", Converter.ByteArrayToHexString(receive_buffer));
 
-			if (!error) {
-				mBundle.putByteArray("response", receive_buffer);
-				msg.setData(mBundle);
-				handleTischResponses.sendMessage(msg);
-			} else {
-				handleTischResponses.sendEmptyMessage(-1);
-			}
+			mBundle.putByteArray("response", receive_buffer);
+			msg.setData(mBundle);
+			handleTischResponses.sendMessage(msg);
+
+			// // verify read data
+			// boolean error = true;
+			// if (in_len > 0) {
+			// Log.d("from Server",
+			// Converter.ByteArrayToHexString(receive_buffer));
+			// error = Arrays.equals(receive_buffer, errorMsg);
+			// }
+			//
+			// if (!error) {
+			// mBundle.putByteArray("response", receive_buffer);
+			// msg.setData(mBundle);
+			// handleTischResponses.sendMessage(msg);
+			// } else {
+			// handleTischResponses.sendEmptyMessage(-1);
+			// }
 
 		}
 

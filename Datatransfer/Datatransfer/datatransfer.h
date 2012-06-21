@@ -36,7 +36,7 @@ public:
 
 	void setSocket(int markerID, SOCKET mySocket, sockaddr_in from);
 	
-	void activateMarker();
+	void activateMarker(int markerID);
 
 	void TcpRequestThreadEntryPoint();
 };

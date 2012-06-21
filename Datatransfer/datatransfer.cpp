@@ -34,6 +34,7 @@ public:
 struct MarkerID {
 	int markerID;
 	TcpRequestThread* thread;
+	sockaddr_in connectInfoMobile;
 	bool active;
 	HandyDropZone* hdz;
 };
@@ -64,7 +65,7 @@ public:
 			cout << "MID: " << markerIDtmp << endl;
 			if(markerIDtmp > 0 && !markers[markerIDtmp].active) {
 					
-				markers[markerIDtmp].thread->activateMarker();
+				markers[markerIDtmp].thread->activateMarker(markerIDtmp);
 
 				RGBATexture* texture = new RGBATexture( TISCH_PREFIX "Box.png" );
 					
@@ -132,20 +133,19 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 	// =========================================================
 	// to client
 	// =========================================================
+	// prepare header
 	char out_len[4];
-	char* toClient;
 	int len, mID_endian;
 
-	len = htonl(4);
+	len = htonl(4); // send 4 char (1 int) network byte order
 	memcpy(&out_len, &len, 4);
 	send(socket, (const char*) out_len, 4, 0);
 
 	// send markerID
-	//char toClient[4];
-	toClient = new char[4];
-	mID_endian = htonl(markerID);
-	memcpy(toClient, &mID_endian, sizeof(int));
-	send(socket, (const char*)toClient, 4, 0);
+	char toClient[4];
+	mID_endian = htonl(markerID); // change to network byte order
+	memcpy(&toClient, &mID_endian, sizeof(int));
+	send(socket, (const char*) toClient, 4, 0);
 
 	//char temp[512];
 	//sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
@@ -294,7 +294,7 @@ void SendToMobile::SendToMobileEntryPoint() {
 	// prepare header
 	int len;
 	char out_len[4];	// holds int describing length of message
-	len = htonl(4);		// send 4 char
+	len = htonl(4);		// send 4 char (1 int) network byte order
 	memcpy(&out_len, &len, 4);
 	// send header: 
 	send(mobileSocket, (const char*) out_len, 4, 0);
@@ -302,7 +302,7 @@ void SendToMobile::SendToMobileEntryPoint() {
 	// prepare payload
 	char toMobile[4];
 	messageToMobile = htonl(messageToMobile);
-	memcpy(toMobile, &messageToMobile, sizeof(int));
+	memcpy(&toMobile, &messageToMobile, sizeof(int));
 	// send payload
 	send(mobileSocket, (const char*) toMobile, 4, 0);
 
@@ -352,10 +352,12 @@ void SendToMobile::sendMessageToMobile(int msg) {
 	messageToMobile = msg;
 }
 
-void TcpRequestThread::activateMarker() {
+void TcpRequestThread::activateMarker(int markerID) {
 	// prepare message to send to mobile and start thread
 	SendToMobile* msgToMobile = new SendToMobile();
 	msgToMobile->sendMessageToMobile(1);
+	msgToMobile->mobileIP = markers[markerID].connectInfoMobile.sin_addr.S_un.S_addr;
+	msgToMobile->mobilePort = 8080;
 	AfxBeginThread(SendToMobile::SendToMobileStaticEntryPoint, (void*)msgToMobile);
 
 	/*char out_len[4];
@@ -463,9 +465,8 @@ void TcpServerThread::TcpServerThreadEntryPoint() {
 			cout << "used iD: " << useMarkerID << endl;
 
 			TcpRequestThread* request = new TcpRequestThread();
-
 			markers[useMarkerID].thread = request;
-		
+			markers[useMarkerID].connectInfoMobile = from;
 			request->setSocket(connection.first, connection.second, from);
 			AfxBeginThread(TcpRequestThread::TcpRequestThreadStaticEntryPoint, (void*)request);
 		}

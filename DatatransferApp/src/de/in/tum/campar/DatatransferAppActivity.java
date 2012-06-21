@@ -50,6 +50,7 @@ public class DatatransferAppActivity extends Activity {
 				while ((mTcpClientService = TcpClientService.getInstance()) == null) {
 
 				}
+				mTcpClientService.setHandleTischRequests(handleTCPRequests);
 				mTcpClientService.setHandleTischResponses(handleTCPResponses);
 				Log.d("DatatransferApp", "onCreate ResponseHandler set");
 			}
@@ -170,6 +171,31 @@ public class DatatransferAppActivity extends Activity {
 		Log.d("DataTransferApp", "TCP Client Service started");
 	}
 
+	public Handler handleTCPRequests = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			Bundle myBundle;
+			Intent intent;
+
+			switch (msg.what) {
+			case 1: // marker was found
+
+				myBundle = msg.getData();
+				byte[] markerFound = myBundle.getByteArray("TischMSG");
+				Log.d("handleMarkerID",
+						"received markerID "
+								+ Converter.ByteArrayToHexString(markerFound));
+
+				intent = new Intent(getBaseContext(), ShowExchangeMenu.class);
+				intent.putExtra("markerID", markerFound);
+
+				startActivity(intent);
+				break;
+			}
+		}
+	};
+
 	public Handler handleTCPResponses = new Handler() {
 
 		@Override
@@ -191,7 +217,7 @@ public class DatatransferAppActivity extends Activity {
 			case 0: // response contains markerID
 				myBundle = msg.getData();
 				byte[] markerIDtmp = myBundle.getByteArray("response");
-				byte[] markerID = { markerIDtmp[2], markerIDtmp[3] }; 
+				byte[] markerID = { markerIDtmp[2], markerIDtmp[3] };
 				Log.d("handleMarkerID",
 						"received markerID "
 								+ Converter.ByteArrayToHexString(markerID));
@@ -200,25 +226,26 @@ public class DatatransferAppActivity extends Activity {
 				intent.putExtra("markerID", markerID);
 
 				startActivity(intent);
-				byte[] message = new byte[] { (byte) 0x01 };
-				int msgType = 1;
-				mTcpClientService.sendMessage(ipTISCH, portTISCH, message, msgType); // waitForMarkerFound
+				// byte[] message = new byte[] { (byte) 0x01 };
+				// int msgType = 1;
+				// mTcpClientService.sendMessage(ipTISCH, portTISCH, message,
+				// msgType); // waitForMarkerFound
 				break;
 
-			case 1: // marker was found
-
-				myBundle = msg.getData();
-				byte[] markerFound = myBundle.getByteArray("response");
-				Log.d("handleMarkerID",
-						"received markerID "
-								+ Converter.ByteArrayToHexString(markerFound));
-
-				intent = new Intent(getBaseContext(), ShowExchangeMenu.class);
-				intent.putExtra("markerID", markerFound);
-				
-
-				startActivity(intent);
-				break;
+			// case 1: // marker was found
+			//
+			// myBundle = msg.getData();
+			// byte[] markerFound = myBundle.getByteArray("response");
+			// Log.d("handleMarkerID",
+			// "received markerID "
+			// + Converter.ByteArrayToHexString(markerFound));
+			//
+			// intent = new Intent(getBaseContext(), ShowExchangeMenu.class);
+			// intent.putExtra("markerID", markerFound);
+			//
+			//
+			// startActivity(intent);
+			// break;
 			}
 		}
 
@@ -235,8 +262,8 @@ public class DatatransferAppActivity extends Activity {
 
 			Log.d("connectToServer", "ip: " + ipTISCH);
 			Log.d("connectToServer", "port: " + portTISCH);
-			
-			if(mTcpClientService == null)
+
+			if (mTcpClientService == null)
 				Log.d("connectToServer", "mTcpClientService null");
 
 			// requestMarkerID
@@ -247,6 +274,5 @@ public class DatatransferAppActivity extends Activity {
 		}
 
 	};
-
 
 }
