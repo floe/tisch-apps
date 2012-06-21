@@ -94,7 +94,7 @@ public:
 			cout << "MID: " << markerIDtmp << endl;
 			if(markerIDtmp > 0 && !markers[markerIDtmp].active) {
 					
-				markers[markerIDtmp].thread->activateMarker(markerIDtmp);
+				activateMarker(markerIDtmp);
 
 				RGBATexture* texture = new RGBATexture( TISCH_PREFIX "Box.png" );
 					
@@ -345,7 +345,7 @@ void SendToMobile::sendMessageToMobile(int msg) {
 	messageToMobile = msg;
 }
 
-void TcpRequestThread::activateMarker(int markerID) {
+void activateMarker(int markerID) {
 	// prepare message to send to mobile and start thread
 	SendToMobile* msgToMobile = new SendToMobile();
 	msgToMobile->sendMessageToMobile(1);

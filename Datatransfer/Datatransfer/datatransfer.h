@@ -22,6 +22,8 @@
 
 #include <map>
 
+void activateMarker(int markerID);
+
 class TcpRequestThread {
 public:
 	int markerID;
@@ -36,7 +38,7 @@ public:
 
 	void setSocket(SOCKET mySocket, sockaddr_in from);
 	
-	void activateMarker(int markerID);
+	//void activateMarker(int markerID);
 
 	void TcpRequestThreadEntryPoint();
 };
