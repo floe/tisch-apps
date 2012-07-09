@@ -3,7 +3,6 @@ package de.in.tum.campar;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -30,8 +29,7 @@ public class TcpClientService extends Service {
 	public static Activity mMainActivity;
 	public static Context mContext;
 	private static TcpClientService sInstance;
-	private Handler handleTischResponses;
-	private Handler handleTischRequests;
+	private Handler ConnectionHandler;
 	public TcpServer tcpServer;
 
 	private NotificationManager nNM;
@@ -138,12 +136,8 @@ public class TcpClientService extends Service {
 	// ------------------------------------------------------------------------
 	//
 	// ------------------------------------------------------------------------
-	public void setHandleTischResponses(Handler mHandler) {
-		handleTischResponses = mHandler;
-	}
-
-	public void setHandleTischRequests(Handler mHandler) {
-		handleTischRequests = mHandler;
+	public void setConnectionHandler(Handler mHandler) {
+		ConnectionHandler = mHandler;
 	}
 
 	private void initServer() {
@@ -158,12 +152,12 @@ public class TcpClientService extends Service {
 	// ------------------------------------------------------------------------
 	// API to Activity for TCP communication
 	// ------------------------------------------------------------------------
-	public void sendMessage(String ip, int port, byte[] message, int messageType) {
+	public void sendMessage(String ip, int port, byte[] message) {
 		Log.d("sendMessage", "IP: " + ip + " port: " + port);
 
 		SentToTISCH sendToTisch = new SentToTISCH(ip, port);
 
-		sendToTisch.setMessage(message, messageType);
+		sendToTisch.setMessage(message);
 
 		Thread clientThread = new Thread(sendToTisch);
 		clientThread.start();
@@ -202,6 +196,13 @@ public class TcpClientService extends Service {
 
 		public void stopServer() {
 			this.runTCPServer = false;
+			try {
+				// necessary to free the socket for later restart of app!
+				serverSocket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		private void initServerSocket() {
@@ -244,7 +245,6 @@ public class TcpClientService extends Service {
 					Log.d("TcpServer", "IOException");
 					e.printStackTrace();
 				}
-
 			} // while(runTCPServer) {
 		}
 	}
@@ -255,7 +255,6 @@ public class TcpClientService extends Service {
 	public class TcpRequest implements Runnable {
 
 		Socket clientSocket;
-		private DataOutputStream dos;
 		private DataInputStream dis;
 		byte[] toTISCH;
 		private Message msg;
@@ -284,49 +283,62 @@ public class TcpClientService extends Service {
 		private void initConnection() throws IOException {
 			msg = Message.obtain();
 			mBundle = new Bundle();
-			dos = new DataOutputStream(clientSocket.getOutputStream());
 			dis = new DataInputStream(clientSocket.getInputStream());
-
+			Log.d("TcpRequest", "initConnection()");
 		}
 
 		private void receiveMessage() throws IOException {
-
+			Log.d("TcpRequest", "receiveMessage()");
 			// =========================================================
 			// read from TISCH
 			// =========================================================
 			// read header
+			// for (int i = 0; i < 13; i++) {
+			// byte b = dis.readByte();
+			// Log.d("TcpRequest", "i:" + i + " byte: " + b);
+			// }
+			// return;
 			int in_len = dis.readInt();
+			Log.d("TcpRequest", "in_len: " + in_len);
 
-			// prepare buffer
-			byte[] receive_buffer = new byte[in_len];
+			if (in_len > 0) {
+				// prepare buffer
+				byte[] receive_buffer = new byte[in_len];
 
-			// read payload
-			dis.readFully(receive_buffer);
+				// read payload
+				dis.readFully(receive_buffer);
+				for (int i = 0; i < receive_buffer.length; i++) {
+					Log.d("TcpRequest", "receive_buffer[" + i + "]: "
+							+ receive_buffer[i]);
+				}
 
-			mBundle.putByteArray("TischMSG", receive_buffer);
-			msg.setData(mBundle);
-			msg.what = 1;
-			handleTischRequests.sendMessage(msg);
+				int contentType = (int) receive_buffer[3]; // ToDo: we need
+															// something better
+															// here!
+				Log.d("TcpRequest", "contentType: " + contentType);
+				byte content[] = Arrays.copyOfRange(receive_buffer, 4,
+						receive_buffer.length);
 
-			// =========================================================
-			// send ack to TISCH
-			// =========================================================
-			// prepare header
-			int out_len, start;
-			toTISCH = new byte[] { (byte) 0x00 };
-			out_len = toTISCH.length;
-			start = 0;
+				msg.what = contentType;
 
-			// send header
-			dos.writeInt(out_len);
-			dos.flush();
+				switch (contentType) {
+				case 0: // markerID, handler in DatatransferAppActivitiy
+				case 1: // marker found
+					mBundle.putByteArray("markerID", content);
+					break;
 
-			// send payload
-			if (out_len > 0) {
-				dos.write(toTISCH, start, out_len);
-				dos.flush();
-			}
+				case 20: // image, handler in ShowExchangeMenu
+					mBundle.putByteArray("image", content);
+					break;
 
+				default:
+
+				}
+
+				msg.setData(mBundle);
+				ConnectionHandler.sendMessage(msg);
+			}// if(in_len > 0)
+			
 		} // receiveMessage()
 
 		private void closeConnection() throws IOException {
@@ -346,24 +358,15 @@ public class TcpClientService extends Service {
 		String target = null;
 		Socket clientSocket;
 		private DataOutputStream dos;
-		private DataInputStream dis;
-		private byte[] errorMsg = new byte[] { (byte) 0xFF };
-		// private byte[] errorMsg = new byte[] { (byte) 0x65, (byte) 0x72,
-		// (byte) 0x72, (byte) 0x6f, (byte) 0x72 };
 
 		byte[] toServer;
-
-		private Message msg;
-		private Bundle mBundle;
 
 		public SentToTISCH(String ip, int port) {
 			this.port = port;
 			this.target = ip;
 		}
 
-		public void setMessage(byte[] message, int msgType) {
-			msg = Message.obtain();
-			msg.what = msgType;
+		public void setMessage(byte[] message) {
 			toServer = message;
 		}
 
@@ -392,10 +395,8 @@ public class TcpClientService extends Service {
 		//
 		// ------------------------------------------------------------------------
 		private void initConnection() throws UnknownHostException, IOException {
-			mBundle = new Bundle();
 			clientSocket = new Socket(target, port);
 			dos = new DataOutputStream(clientSocket.getOutputStream());
-			dis = new DataInputStream(clientSocket.getInputStream());
 
 		}
 
@@ -417,40 +418,6 @@ public class TcpClientService extends Service {
 				dos.write(toServer, start, out_len);
 				dos.flush();
 			}
-
-			// =========================================================
-			// from server
-			// =========================================================
-			// read header
-			int in_len = dis.readInt();
-
-			// prepare buffer
-			byte[] receive_buffer = new byte[in_len];
-
-			// read payload
-			dis.readFully(receive_buffer);
-
-			Log.d("from Server", Converter.ByteArrayToHexString(receive_buffer));
-
-			mBundle.putByteArray("response", receive_buffer);
-			msg.setData(mBundle);
-			handleTischResponses.sendMessage(msg);
-
-			// // verify read data
-			// boolean error = true;
-			// if (in_len > 0) {
-			// Log.d("from Server",
-			// Converter.ByteArrayToHexString(receive_buffer));
-			// error = Arrays.equals(receive_buffer, errorMsg);
-			// }
-			//
-			// if (!error) {
-			// mBundle.putByteArray("response", receive_buffer);
-			// msg.setData(mBundle);
-			// handleTischResponses.sendMessage(msg);
-			// } else {
-			// handleTischResponses.sendEmptyMessage(-1);
-			// }
 
 		}
 

@@ -21,7 +21,7 @@
 #endif
 
 #include <map>
-
+static const struct sockaddr_in zero_sockaddr_in;
 void activateMarker(int markerID);
 
 class TcpRequestThread {
@@ -29,10 +29,11 @@ public:
 	int markerID;
 	SOCKET socket;
 	sockaddr_in from;
-
+	
 	static UINT TcpRequestThreadStaticEntryPoint(LPVOID pThis) {
 		TcpRequestThread* pthisTcpRequest = (TcpRequestThread*) pThis;
 		pthisTcpRequest->TcpRequestThreadEntryPoint();
+		delete pThis;
 		return 1;
 	}
 
@@ -69,11 +70,13 @@ public:
 	SOCKET mobileSocket;
 	int mobilePort;
 	ULONG mobileIP;
-	int messageToMobile;
+	unsigned char* messageToMobile;
+	int messageSize;
 
 	static UINT SendToMobileStaticEntryPoint(LPVOID pThis) {
 		SendToMobile* pthisSendToMobile = (SendToMobile*) pThis;
 		pthisSendToMobile->SendToMobileEntryPoint();
+		delete pThis;
 		return 1;
 	}
 
@@ -81,6 +84,6 @@ public:
 
 	void SendToMobileEntryPoint();
 
-	void sendMessageToMobile(int msg);
+	void sendMessageToMobile(unsigned char* msg, int amountOfBytes);
 
 };

@@ -29,6 +29,11 @@ public:
 	{
 		shadow = true;
 	}
+
+	void deleteMe() {
+		parent->remove(this);
+		delete this;
+	}
 };
 
 struct MarkerID {
@@ -73,9 +78,9 @@ public:
     }
 }; 
 
-class Handy: public Container {
+class InteractionArea: public Container {
 public:
-	Handy(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x00):
+	InteractionArea(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x00):
 	Container( _w, _h, _x, _y, angle, _tex, mode)
 	{
 		Gesture handy( "handy", GESTURE_FLAGS_DEFAULT|GESTURE_FLAGS_STICKY);
@@ -113,6 +118,7 @@ public:
 			}
 		} // if( gesture->name() == "handy" )
 	} // void action( Gesture* gesture )
+
 };
 
 void showImage(int markerID, int i)
@@ -155,7 +161,7 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 	
 	memcpy(&in_len, &inBuffer, sizeof(int));
 	in_len = ntohl(in_len);
-	cout << "recvBytes: " << recvBytes << " inBuffer: " << in_len << endl;
+	cout << "header: " << recvBytes << " bytes; value: " << in_len << endl;
 
 	//===================================================================
 	// read payload
@@ -166,79 +172,87 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 	}
 	else {
 		for(int i = 0; i < in_len; i++) {
-			printf("inMsgBuffer %d\n", inMsgBuffer[i]);
+			printf("bytes inMsgBuffer %d\n", inMsgBuffer[i]);
 		}
 	}
 
-	//Marker requested
-	if( (int)inMsgBuffer[0] == 0 )
-	{
-		int useMarkerID = -1;
-
-		for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
-			if(it->second.connectInfoMobile.sin_addr.S_un.S_addr == NULL) {
-				useMarkerID = it->first;
-				break;
-			}
-		}
-
-		if(useMarkerID == -1) {
-			cout << "no marker ID left, try later again" << endl;
-			closesocket(socket);
-		}
-
-		markers[useMarkerID].connectInfoMobile = from;
-
-		// =========================================================
-		// to client
-		// =========================================================
-		// prepare header
-		char out_len[4];
-		int len, mID_endian;
-
-		len = htonl(4); // send 4 char (1 int) network byte order
-		memcpy(&out_len, &len, 4);
-		send(socket, (const char*) out_len, 4, 0);
-
-		// send markerID
-		char toClient[4];
-		mID_endian = htonl(useMarkerID); // change to network byte order
-		memcpy(&toClient, &mID_endian, sizeof(int));
-		send(socket, (const char*) toClient, 4, 0);
-	}
-
-	else
-	{
-		for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
-			if(it->second.connectInfoMobile.sin_addr.S_un.S_addr == from.sin_addr.S_un.S_addr) {
-				showImage(it->first, (int)inMsgBuffer[0]);
-				break;
-			}
-		}
-
-		// =========================================================
-		// to client
-		// =========================================================
-		// prepare header
-		char out_len[4];
-		int len, mID_endian;
-
-		len = htonl(4); // send 4 char (1 int) network byte order
-		memcpy(&out_len, &len, 4);
-		send(socket, (const char*) out_len, 4, 0);
-
-		// send markerID
-		char toClient[4];
-		mID_endian = htonl(0); // change to network byte order
-		memcpy(&toClient, &mID_endian, sizeof(int));
-		send(socket, (const char*) toClient, 4, 0);
-	}
-
-	//char temp[512];
-	//sprintf(temp, "Your IP is %s\r\n",inet_ntoa(from.sin_addr));
-	//send(socket, temp, strlen(temp), 0);
-	//cout << "Connection from " << inet_ntoa(from.sin_addr) << endl;
+	int contentType;
+	memcpy(&contentType, inMsgBuffer, sizeof(int));
+	contentType = ntohl(contentType);
 	
+	switch(contentType) {
+	case 0: { // request markerID
+			cout << "select marker ID" << endl;
+			int useMarkerID = -1;
+			for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
+				if(it->second.connectInfoMobile.sin_addr.S_un.S_addr == NULL) {
+					useMarkerID = it->first;
+					break;
+				}
+			}
+			if(useMarkerID == -1) {
+				cout << "no marker ID left, try later again" << endl;
+				closesocket(socket);
+			}
+			cout << "selected MakerID: " << useMarkerID << endl;
+			markers[useMarkerID].connectInfoMobile = from;
+
+			// prepare message to send to mobile and start thread
+			int messageSize = 8;
+			SendToMobile* msgToMobile = new SendToMobile();
+			unsigned char* msg = new unsigned char[messageSize];
+			int contentType = htonl(0); // send free markerID
+			msg[0] = (contentType >> 0) & 0xff;
+			msg[1] = (contentType >> 8) & 0xff;
+			msg[2] = (contentType >> 16) & 0xff;
+			msg[3] = (contentType >> 24) & 0xff;
+		
+			int markerIDnet = htonl(useMarkerID); // msg
+			msg[4] = (markerIDnet >> 0) & 0xff;
+			msg[5] = (markerIDnet >> 8) & 0xff;
+			msg[6] = (markerIDnet >> 16) & 0xff;
+			msg[7] = (markerIDnet >> 24) & 0xff;
+		
+			msgToMobile->sendMessageToMobile(msg, messageSize);
+			msgToMobile->mobileIP = markers[useMarkerID].connectInfoMobile.sin_addr.S_un.S_addr;
+			msgToMobile->mobilePort = 8080;
+			AfxBeginThread(SendToMobile::SendToMobileStaticEntryPoint, (void*)msgToMobile);
+
+			break;
+		}
+	case 3: { // TISCH received close connection
+			cout << "close connection";
+
+			int mMarkerID;
+			char cMarkerID[4] = { inMsgBuffer[4], inMsgBuffer[5], inMsgBuffer[6], inMsgBuffer[7] };
+			
+			memcpy(&mMarkerID, cMarkerID, sizeof(int));
+			mMarkerID = ntohl(mMarkerID);
+			cout << " to mobile with mMarkerID: " << mMarkerID << endl;
+			
+			if(mMarkerID != 0) {
+				// deactivate and reset connection info
+				markers[mMarkerID].active = false;
+				markers[mMarkerID].connectInfoMobile = zero_sockaddr_in;
+			
+				// remove HandyDropZone from display
+				markers[mMarkerID].hdz->deleteMe();
+				markers[mMarkerID].hdz = NULL;
+			}
+			break;
+		}
+	case 20: { // image received
+			cout << "image received" << endl;
+			break;
+		}
+	default: {
+			cout << "default" << endl;
+			break;
+		}
+	}
+
+	delete inMsgBuffer;
+
 	closesocket(socket);
 
 	cout << "socket closed" << endl;
@@ -285,70 +299,52 @@ void SendToMobile::SendToMobileEntryPoint() {
 	// to mobile
 	// =========================================================
 	// prepare header
-	int len;
-	char out_len[4];	// holds int describing length of message
-	len = htonl(4);		// send 4 char (1 int) network byte order
-	memcpy(&out_len, &len, 4);
+	const int headerSize = 4; // byte
+	int len = htonl(messageSize); // transform messageSize to network
+	char out_len[headerSize];	// holds int describing length of message
+	memcpy(&out_len, &len, headerSize);
 	// send header: 
-	send(mobileSocket, (const char*) out_len, 4, 0);
+	cout << "send length" << endl;
+	send(mobileSocket, (const char*) out_len, headerSize, 0);
 
-	// prepare payload
-	char toMobile[4];
-	messageToMobile = htonl(messageToMobile);
-	memcpy(&toMobile, &messageToMobile, sizeof(int));
 	// send payload
-	send(mobileSocket, (const char*) toMobile, 4, 0);
-
-	// =========================================================
-	// receive ack
-	// =========================================================
-	// read header
-	int in_len;
-	int recvBytes = 0;
-	char inBuffer[4];
-	
-	recvBytes = recv(mobileSocket, inBuffer, sizeof inBuffer, MSG_WAITALL);
-	// if more or less than 4 chars are received -> error was no int
-	if(recvBytes != 4) {
-		printf("Error: recv returned: %d\n", recvBytes);
-	}
-	else {
-		printf("%d %d %d %d\n", inBuffer[0], inBuffer[1], inBuffer[2], inBuffer[3]);
-	}
-	memcpy(&in_len, &inBuffer, sizeof(int));
-	in_len = ntohl(in_len);
-	cout << "recvBytes: " << recvBytes << " inBuffer: " << in_len << endl;
-			
-	// =========================================================
-	// read payload
-
-	char* inMessage = new char[in_len];
-	recvBytes = recv(mobileSocket, inMessage, in_len, MSG_WAITALL);
-	if(recvBytes != in_len) {
-		printf("Error: recv returned: %d\n", recvBytes);
-	}
-	else {
-		for(int i = 0; i < in_len; i++) {
-			printf("inMsgBuffer %d\n", inMessage[i]);
-		}
-	}
+	cout << "send data ... ";
+	send(mobileSocket, (const char*) messageToMobile, messageSize, 0);
 
 	// =========================================================
 	// finish, close
 
 	closesocket(mobileSocket);
-	cout << "socket to Mobile closed" << endl;
-	delete inMessage;
+	cout << "done, close" << endl;
+	
 }
 
-void SendToMobile::sendMessageToMobile(int msg) {
+void SendToMobile::sendMessageToMobile(unsigned char* msg, int amountOfBytes) {
+	cout << "set msg to send" << endl;
+	cout << "bytes to send: " << amountOfBytes << endl;
 	messageToMobile = msg;
+	messageSize = amountOfBytes;
 }
 
 void activateMarker(int markerID) {
+	cout << "activate marker: " << markerID << endl;
 	// prepare message to send to mobile and start thread
+	int messageSize = 8;
 	SendToMobile* msgToMobile = new SendToMobile();
-	msgToMobile->sendMessageToMobile(1);
+	unsigned char* msg = new unsigned char[messageSize];
+	int contentType = htonl(1); // foundMarker
+	msg[0] = (contentType >> 0)& 0xff;
+	msg[1] = (contentType >> 8) & 0xff;
+	msg[2] = (contentType >> 16) & 0xff;
+	msg[3] = (contentType >> 24) & 0xff;
+		
+	int markerIDnet = htonl(markerID); // msg
+	msg[4] = (markerIDnet >> 0) & 0xff;
+	msg[5] = (markerIDnet >> 8) & 0xff;
+	msg[6] = (markerIDnet >> 16) & 0xff;
+	msg[7] = (markerIDnet >> 24) & 0xff;
+		
+	msgToMobile->sendMessageToMobile(msg, messageSize);
 	msgToMobile->mobileIP = markers[markerID].connectInfoMobile.sin_addr.S_un.S_addr;
 	msgToMobile->mobilePort = 8080;
 	AfxBeginThread(SendToMobile::SendToMobileStaticEntryPoint, (void*)msgToMobile);
@@ -453,9 +449,9 @@ int main( int argc, char* argv[] ) {
 	win = new Window( width, height, "Datatransfer", mouse );
 	win->texture(0);
 
-	Handy* handy = new Handy( width, height );
-	handy->add( new Label("interaction area", 300, 20, 0, 120, 0, 1) );
-	win->add(handy);
+	InteractionArea* iArea = new InteractionArea( width, height );
+	iArea->add( new Label("interaction area", 300, 20, 0, 120, 0, 1) );
+	win->add(iArea);
 
 	win->update();
 	
