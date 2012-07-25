@@ -30,22 +30,34 @@ RGBATexture* empty;
 class MyButton: public Button {
 	public:
 
-		MyButton( int _x = 0, int _y = 0 ):
+		MyButton( int _x = 0, int _y = 0, const char* label = "" ):
 			Button( bsize,bsize,_x,_y,0.0,empty)
 		{
 			mycolor[0] = 1.0;
 			mycolor[1] = 1.0;
 			mycolor[2] = 1.0;
 			mycolor[3] = 0.0;
-			lbl = new Label(" ",50,20,x+25,y+25);
+			white = new RGBATexture("white.png");
+			lbl = new Label(label,50,50,x+40,y+25,0,1,0,NULL);
+			lbl->color(0,0,0,1);
+			l_angle = 0;
 		}
 
 		void init() { parent->add(lbl); }
 
-		void tap( Vector pos, int id ) { lbl->set( "foo!" ); }
-		void release( ) { lbl->set( " " ); }
+		void draw() {
+			l_angle += 0.05;
+			lbl->setangle(l_angle); //if (angle >= 2*M_PI) angle = 0;
+			Button::draw();
+		}
+
+
+		void tap( Vector pos, int id ) { lbl->set( "42%" ); lbl->texture( white ); }
+		void release( ) { lbl->set( "" ); lbl->texture(NULL); }
 
 		Label* lbl;
+		RGBATexture* white;
+		double l_angle;
 };
 
 int main( int argc, char* argv[] ) {
