@@ -23,8 +23,9 @@
  *
  */
 
-int bsize = 15;
+int bsize = 25;
 RGBATexture* empty;
+RGBATexture* white;
 
 // This class demonstrates how to react to the predefined tap gesture using Button as superclass.
 class MyButton: public Button {
@@ -37,7 +38,6 @@ class MyButton: public Button {
 			mycolor[1] = 1.0;
 			mycolor[2] = 1.0;
 			mycolor[3] = 0.0;
-			white = new RGBATexture("white.png");
 			lbl = new Label(label,50,50,x+40,y+25,0,1,0,NULL);
 			lbl->color(0,0,0,1);
 			l_angle = 0;
@@ -46,17 +46,15 @@ class MyButton: public Button {
 		void init() { parent->add(lbl); }
 
 		void draw() {
-			l_angle += 0.05;
+			l_angle += 0.25;
 			lbl->setangle(l_angle); //if (angle >= 2*M_PI) angle = 0;
 			Button::draw();
 		}
-
 
 		void tap( Vector pos, int id ) { lbl->set( "42%" ); lbl->texture( white ); }
 		void release( ) { lbl->set( "" ); lbl->texture(NULL); }
 
 		Label* lbl;
-		RGBATexture* white;
 		double l_angle;
 };
 
@@ -65,11 +63,12 @@ int main( int argc, char* argv[] ) {
 	std::cout << "siedler - based on libTISCH 2.0" << std::endl;
 	std::cout << "(c) 2012 by Florian Echtler <floe@butterbrot.org>" << std::endl;
 
-	empty = new RGBATexture("empty.png");
-
 	// create a new window: width, height, title, use_mouse
 	Window* win = new Window( 800, 600, "siedler", (argc > 1) );
 	win->texture( new RGBATexture("siedler.png") );
+
+	empty = new RGBATexture("empty.png");
+	white = new RGBATexture("white.png");
 
 	MyButton* btn1 = new MyButton(   0,-33.5 ); win->add( btn1 ); btn1->init();
 	MyButton* btn2 = new MyButton(   0, 33.5 ); win->add( btn2 ); btn2->init();
