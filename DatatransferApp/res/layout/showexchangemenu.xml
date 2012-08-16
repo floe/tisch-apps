@@ -13,16 +13,36 @@
         android:text="@string/showExchangeMenu"
         android:textSize="20sp" />
 
-    <Gallery
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/gallery"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+    <ImageView
+        android:id="@+id/selectedImage"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:contentDescription="@string/selectedImage"
+        android:padding="10dp" />
 
-    <Button
-        android:id="@+id/buttonClose"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/buttonClose" />
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/buttonClose"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:text="@string/buttonClose" />
+
+        <Button
+            android:id="@+id/selectImage"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:text="@string/selectImage" />
+
+        <Button
+            android:id="@+id/sendImage"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:text="@string/sendImage" />
+
+    </LinearLayout>
 
 </LinearLayout>

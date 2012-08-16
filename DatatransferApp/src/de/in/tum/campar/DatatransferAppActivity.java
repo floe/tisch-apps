@@ -336,8 +336,8 @@ public class DatatransferAppActivity extends Activity {
 
 			// requestMarkerID
 			byte[] msg = new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x00,
-					(byte) 0x00, (byte) 0x00 };
-			// | contentType = (int) 0 | message = 0x00 |
+					(byte) 0x00 };
+			// | contentType = (int) 0 |
 			mTcpClientService.sendMessage(ipTISCH, portTISCH, msg);
 
 		}

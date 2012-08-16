@@ -11,12 +11,12 @@
 #include "Window.h"
 #include <typeinfo>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include "BlobMarker.h"
 #include "BlobCount.h"
 #include "BlobPos.h"
 
-#include "Window.h"
 #include "Label.h"
 #include "Motion.h"
 
@@ -42,6 +42,7 @@ struct MarkerID {
 	sockaddr_in connectInfoMobile;
 	bool active;
 	HandyDropZone* hdz;
+	vector<Container*> imageVector;
 };
 
 Window* win = 0;
@@ -121,17 +122,56 @@ public:
 
 };
 
-void showImage(int markerID, int i)
-{	
-	MyImage* img = new MyImage( 
-		200,//tmp->width(1)/5, 
-		100, //tmp->height(1)/5,
-		markers[markerID].hdz->x ,
+void showImage(int markerID)
+{
+	cout << textures[0]->width(1) << " " << textures[0]->height(1) << endl;
+	textures[0] = new RGBATexture( "target.png" );//new RGBATexture( "target.png" );
+	cout << textures[0]->width(1) << " " << textures[0]->height(1) << endl;
+	textures[0]->
+	RGBATexture* picture = textures[0]; //new RGBATexture( "target.png" );
+	
+	MyImage* img = new MyImage(
+		200,
+		150,
+		markers[markerID].hdz->x,
 		markers[markerID].hdz->y < 0 ? markers[markerID].hdz->y + markers[markerID].hdz->h : markers[markerID].hdz->y - markers[markerID].hdz->h,
 		0,
-		textures[i-1], 0x05
-	);
+		picture, 0x05
+		);
+	//textures[0]
 	win->add( img );
+	markers[markerID].imageVector.push_back( img );
+	
+			
+	/*cout << "imageSize " << markers[markerID].imageSize << endl;
+	cout << "#imgs " << markers[markerID].imageVector.size() << endl;
+	unsigned char* imagedata = markers[markerID].imageVector.back();
+	
+	cout << "open file ... ";
+	ofstream outfile("tmp.jpg", ios::out | ios::binary);
+	if(!outfile) {
+		cout<<"Cannot open output file\n";
+		return 1;
+	}
+	cout << "writing jpg to disk ... ";
+	int n[5] = {1, 2, 3, 4, 5};
+	outfile.write((char*)&n, sizeof n);
+	
+	cout << "done ... ";
+	outfile.close();
+	cout << "close" << endl;
+	*/
+	
+	//RGBATexture* texture = new RGBATexture("tmp.png");
+	//MyImage* img = new MyImage( 
+	//	200,//tmp->width(1)/5, 
+	//	100, //tmp->height(1)/5,
+	//	markers[markerID].hdz->x ,
+	//	markers[markerID].hdz->y < 0 ? markers[markerID].hdz->y + markers[markerID].hdz->h : markers[markerID].hdz->y - markers[markerID].hdz->h,
+	//	0,
+	//	texture, 0x05
+	//);
+	//win->add( img );
 }
 
 void TcpRequestThread::setSocket(SOCKET _socket, sockaddr_in _from) {
@@ -167,34 +207,41 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 	// read payload
 	char* inMsgBuffer = new char[in_len];
 	recvBytes = recv(socket, inMsgBuffer, in_len, MSG_WAITALL);
-	if(recvBytes != in_len) {
+
+	cout << "in_len: " << in_len << " recvBytes: " << recvBytes << endl;
+
+	/*if(recvBytes != in_len) {
 		printf("Error: recv returned: %d\n", recvBytes);
 	}
 	else {
 		for(int i = 0; i < in_len; i++) {
 			printf("bytes inMsgBuffer %d\n", inMsgBuffer[i]);
 		}
-	}
+	}*/
 
 	int contentType;
 	memcpy(&contentType, inMsgBuffer, sizeof(int));
 	contentType = ntohl(contentType);
-	
+	cout << "contentType: " << contentType << endl;
 	switch(contentType) {
 	case 0: { // request markerID
 			cout << "select marker ID" << endl;
 			int useMarkerID = -1;
 			for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
-				if(it->second.connectInfoMobile.sin_addr.S_un.S_addr == NULL) {
+				if(it->second.active == false) {
 					useMarkerID = it->first;
 					break;
 				}
 			}
+			
+			cout << "selected MakerID: " << useMarkerID << endl;
+
 			if(useMarkerID == -1) {
 				cout << "no marker ID left, try later again" << endl;
 				closesocket(socket);
+				break;
 			}
-			cout << "selected MakerID: " << useMarkerID << endl;
+			
 			markers[useMarkerID].connectInfoMobile = from;
 
 			// prepare message to send to mobile and start thread
@@ -242,7 +289,68 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 			break;
 		}
 	case 20: { // image received
+			// | contentType = (int) 20 | markerID | imagedata |
 			cout << "image received" << endl;
+			int headersize = 8;
+			
+			int mMarkerID;
+			char cMarkerID[4] = { inMsgBuffer[4], inMsgBuffer[5], inMsgBuffer[6], inMsgBuffer[7] };
+			memcpy(&mMarkerID, cMarkerID, sizeof(int));
+			mMarkerID = ntohl(mMarkerID);
+			
+			cout << "markerID: " << mMarkerID << endl;
+
+			unsigned char* image = new unsigned char[recvBytes - headersize];
+			for(int i = 0; i < recvBytes - headersize; i++) {
+				if(i%100000 == 0)
+					cout << "i: " << i << endl;
+				image[i] = inMsgBuffer[i+headersize];
+			}
+			
+			cout << "open file ... ";
+			ofstream outfile("tmp.jpg", ios::out | ios::binary);
+			if(!outfile) {
+				cout<<"Cannot open output file\n";
+			}
+			cout << "writing jpg to disk ... ";
+			outfile.write((char*)image, recvBytes - headersize);
+			cout << "done ... ";
+			outfile.close();
+			cout << "close" << endl;
+			
+			cout << "convert jpg to png" << endl;
+			system("convert tmp.jpg target.png");
+			cout << "resizing png" << endl;
+			system("mogrify -resize 15% target.png");
+			cout << "delete tmp.jpg" << endl;
+			system("del tmp.jpg");
+
+			showImage(mMarkerID);
+
+			//memcpy(&image, &inMsgBuffer+headersize, recvBytes-headersize);
+			
+			//markers[mMarkerID].imageSize = recvBytes - headersize;
+			
+			//cout << "imageSize " << markers[markerID].imageSize << endl;
+			//cout << "#imgs " << markers[markerID].imageVector.size() << endl;
+			//unsigned char* imagedata = markers[markerID].imageVector.back();
+	
+			
+
+			
+
+			//
+			//cout << "showImage done" << endl;
+			/*int mImageID;
+			char cImageId[4] = { inMsgBuffer[8], inMsgBuffer[9], inMsgBuffer[10], inMsgBuffer[11] };
+			memcpy(&mImageID, cImageId, sizeof(int));
+			mImageID = ntohl(mImageID);
+			
+			cout << "markerID: " << mMarkerID << " image id: " << mImageID << endl;
+
+			showImage(mMarkerID, mImageID);*/
+			
+
 			break;
 		}
 	default: {
@@ -251,11 +359,13 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 		}
 	}
 
+	cout << "delete inMsgBuffer" << endl;
 	delete inMsgBuffer;
 
+	cout << "close socket ... ";
 	closesocket(socket);
 
-	cout << "socket closed" << endl;
+	cout << "done" << endl;
 }
 
 void SendToMobile::connectToMobile() {

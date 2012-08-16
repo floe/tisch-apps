@@ -21,6 +21,7 @@
 #endif
 
 #include <map>
+
 static const struct sockaddr_in zero_sockaddr_in;
 void activateMarker(int markerID);
 

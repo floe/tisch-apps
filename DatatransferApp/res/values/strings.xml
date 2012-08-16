@@ -12,12 +12,16 @@
     <!-- TcpClient Service -->
     <string name="tcpServiceStarted">Service started</string>
     <string name="local_service_stopped">Service stopped</string>
-    
+
     <!-- ShowMarker -->
     <string name="showMarker">display Marker</string>
-    
+
     <!-- ShowExchangeMenu -->
     <string name="showExchangeMenu">Exchange Menu</string>
     <string name="imgContentDescription">Bild</string>
+    <string name="selectImage">select Image</string>
+    <string name="sendImage">send Image</string>
+    <string name="selectedImage">your image</string>
     <string name="buttonClose">Quit</string>
+
 </resources>

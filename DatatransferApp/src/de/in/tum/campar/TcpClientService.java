@@ -1,8 +1,14 @@
 package de.in.tum.campar;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -13,9 +19,13 @@ import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Bitmap.CompressFormat;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -155,13 +165,23 @@ public class TcpClientService extends Service {
 	public void sendMessage(String ip, int port, byte[] message) {
 		Log.d("sendMessage", "IP: " + ip + " port: " + port);
 
-		SentToTISCH sendToTisch = new SentToTISCH(ip, port);
+		SentToTISCH sendToTisch = new SentToTISCH(ip, port, 0);
 
 		sendToTisch.setMessage(message);
 
 		Thread clientThread = new Thread(sendToTisch);
 		clientThread.start();
 
+	}
+
+	public void sendFile(String ip, int port, File file, byte[] header) {
+		Log.d("sendFile", "IP: " + ip + " port: " + port);
+
+		SentToTISCH sendToTisch = new SentToTISCH(ip, port, 1);
+		sendToTisch.setFile(file, header);
+
+		Thread clientThread = new Thread(sendToTisch);
+		clientThread.start();
 	}
 
 	// ========================================================================
@@ -316,8 +336,13 @@ public class TcpClientService extends Service {
 															// something better
 															// here!
 				Log.d("TcpRequest", "contentType: " + contentType);
-				byte content[] = Arrays.copyOfRange(receive_buffer, 4,
-						receive_buffer.length);
+
+				byte content[] = new byte[receive_buffer.length];// Arrays.copyOfRange(receive_buffer,
+																	// 4,
+																	// receive_buffer.length);
+				for (int i = 4; i < receive_buffer.length; i++) {
+					content[i - 4] = receive_buffer[i];
+				}
 
 				msg.what = contentType;
 
@@ -338,7 +363,7 @@ public class TcpClientService extends Service {
 				msg.setData(mBundle);
 				ConnectionHandler.sendMessage(msg);
 			}// if(in_len > 0)
-			
+
 		} // receiveMessage()
 
 		private void closeConnection() throws IOException {
@@ -358,16 +383,24 @@ public class TcpClientService extends Service {
 		String target = null;
 		Socket clientSocket;
 		private DataOutputStream dos;
+		private int type;
+		private File file;
 
 		byte[] toServer;
 
-		public SentToTISCH(String ip, int port) {
+		public SentToTISCH(String ip, int port, int type) {
 			this.port = port;
 			this.target = ip;
+			this.type = type;
 		}
 
 		public void setMessage(byte[] message) {
 			toServer = message;
+		}
+
+		public void setFile(File file, byte[] header) {
+			this.file = file;
+			this.toServer = header;
 		}
 
 		// ------------------------------------------------------------------------
@@ -379,7 +412,17 @@ public class TcpClientService extends Service {
 
 				initConnection();
 
-				sendMessage();
+				switch (type) {
+				case 0:
+					sendMessage();
+					break;
+				case 1:
+					sendFile();
+					ConnectionHandler.sendEmptyMessage(0);
+					break;
+				default:
+					break;
+				}
 
 				closeConnection();
 
@@ -389,6 +432,35 @@ public class TcpClientService extends Service {
 				e.printStackTrace();
 			}
 
+		}
+
+		
+		private Bitmap codec2(Bitmap src, Bitmap.CompressFormat format,
+				int quality) {
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			src.compress(format, quality, os);
+	 
+			byte[] array = os.toByteArray();
+			return BitmapFactory.decodeByteArray(array, 0, array.length);
+		}
+		
+		private File codec(Bitmap src, Bitmap.CompressFormat format,
+				int quality) {
+			
+			File tmp = new File("/mnt/sdcard/tmpImage.png");
+			try {
+				OutputStream ostream = new FileOutputStream(tmp);
+				src.compress(format, quality, ostream);
+				ostream.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return tmp;
+			
 		}
 
 		// ------------------------------------------------------------------------
@@ -421,7 +493,43 @@ public class TcpClientService extends Service {
 
 		}
 
+		private void sendFile() throws IOException {
+			int bytesAvailable, bytesRead, bufferSize;
+			int maxBufferSize = 1 * 1024 * 1024;
+			byte[] buffer;
+			long fileSize = file.length();
+			int size = (int) (toServer.length + fileSize);
+			dos.writeInt(size);
+			dos.flush();
+
+			dos.write(toServer, 0, toServer.length);
+
+//			Bitmap bmp = BitmapFactory.decodeFile(file.getAbsolutePath());
+//			File image = codec(bmp, Bitmap.CompressFormat.PNG, 0);
+//			
+			FileInputStream fis = new FileInputStream(file);
+			bytesAvailable = fis.available();
+			bufferSize = Math.min(bytesAvailable, maxBufferSize);
+			buffer = new byte[bufferSize];
+			bytesRead = fis.read(buffer, 0, bufferSize);
+			while (bytesRead > 0) {
+				dos.write(buffer, 0, bufferSize);
+				//
+				bytesAvailable = fis.available();
+				bufferSize = Math.min(bytesAvailable, maxBufferSize);
+				bytesRead = fis.read(buffer, 0, bufferSize);
+			}
+			dos.flush();
+			fis.close();
+			
+//			image.delete();
+
+		}
+
 		private void closeConnection() throws IOException {
+
+			dos.close();
+
 			clientSocket.close();
 
 		}
