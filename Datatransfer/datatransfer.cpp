@@ -124,11 +124,7 @@ public:
 
 void showImage(int markerID)
 {
-	cout << textures[0]->width(1) << " " << textures[0]->height(1) << endl;
-	textures[0] = new RGBATexture( "target.png" );//new RGBATexture( "target.png" );
-	cout << textures[0]->width(1) << " " << textures[0]->height(1) << endl;
-	textures[0]->
-	RGBATexture* picture = textures[0]; //new RGBATexture( "target.png" );
+	RGBATexture* picture = new RGBATexture( "target.png" );
 	
 	MyImage* img = new MyImage(
 		200,
@@ -138,40 +134,8 @@ void showImage(int markerID)
 		0,
 		picture, 0x05
 		);
-	//textures[0]
 	win->add( img );
 	markers[markerID].imageVector.push_back( img );
-	
-			
-	/*cout << "imageSize " << markers[markerID].imageSize << endl;
-	cout << "#imgs " << markers[markerID].imageVector.size() << endl;
-	unsigned char* imagedata = markers[markerID].imageVector.back();
-	
-	cout << "open file ... ";
-	ofstream outfile("tmp.jpg", ios::out | ios::binary);
-	if(!outfile) {
-		cout<<"Cannot open output file\n";
-		return 1;
-	}
-	cout << "writing jpg to disk ... ";
-	int n[5] = {1, 2, 3, 4, 5};
-	outfile.write((char*)&n, sizeof n);
-	
-	cout << "done ... ";
-	outfile.close();
-	cout << "close" << endl;
-	*/
-	
-	//RGBATexture* texture = new RGBATexture("tmp.png");
-	//MyImage* img = new MyImage( 
-	//	200,//tmp->width(1)/5, 
-	//	100, //tmp->height(1)/5,
-	//	markers[markerID].hdz->x ,
-	//	markers[markerID].hdz->y < 0 ? markers[markerID].hdz->y + markers[markerID].hdz->h : markers[markerID].hdz->y - markers[markerID].hdz->h,
-	//	0,
-	//	texture, 0x05
-	//);
-	//win->add( img );
 }
 
 void TcpRequestThread::setSocket(SOCKET _socket, sockaddr_in _from) {
@@ -326,30 +290,6 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 			system("del tmp.jpg");
 
 			showImage(mMarkerID);
-
-			//memcpy(&image, &inMsgBuffer+headersize, recvBytes-headersize);
-			
-			//markers[mMarkerID].imageSize = recvBytes - headersize;
-			
-			//cout << "imageSize " << markers[markerID].imageSize << endl;
-			//cout << "#imgs " << markers[markerID].imageVector.size() << endl;
-			//unsigned char* imagedata = markers[markerID].imageVector.back();
-	
-			
-
-			
-
-			//
-			//cout << "showImage done" << endl;
-			/*int mImageID;
-			char cImageId[4] = { inMsgBuffer[8], inMsgBuffer[9], inMsgBuffer[10], inMsgBuffer[11] };
-			memcpy(&mImageID, cImageId, sizeof(int));
-			mImageID = ntohl(mImageID);
-			
-			cout << "markerID: " << mMarkerID << " image id: " << mImageID << endl;
-
-			showImage(mMarkerID, mImageID);*/
-			
 
 			break;
 		}
