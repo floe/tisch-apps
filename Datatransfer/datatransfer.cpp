@@ -49,13 +49,20 @@ Window* win = 0;
 
 std::map<int, MarkerID> markers;
 
-RGBATexture* textures[3];
+//RGBATexture* textures[4];
 
 class MyImage: public Container {
 public:
     MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
     Container( _w, _h, _x, _y, angle, _tex, mode)
     {}
+
+	void setImage(char* imgName) {
+		imageName = new char[strlen(imgName)+1];
+		strcpy(imageName, imgName);
+		cout << "imageName: " << imageName << endl;
+		
+	}
 
     void action( Gesture* gesture ) {
 		if( gesture->name() == "release" )
@@ -77,7 +84,24 @@ public:
         else
             Container::action(gesture);
     }
-}; 
+
+	void draw() {
+		enter();
+
+		//cout << "draw fkt" << endl;
+		if(imageName != NULL) {
+			//cout << "overwrite mytex" << endl;
+			mytex = new RGBATexture( imageName );
+		}
+
+		Widget::paint();
+		paint();
+		leave();
+	}
+
+protected:
+	char* imageName;
+};
 
 class InteractionArea: public Container {
 public:
@@ -121,22 +145,6 @@ public:
 	} // void action( Gesture* gesture )
 
 };
-
-void showImage(int markerID)
-{
-	RGBATexture* picture = new RGBATexture( "target.png" );
-	
-	MyImage* img = new MyImage(
-		200,
-		150,
-		markers[markerID].hdz->x,
-		markers[markerID].hdz->y < 0 ? markers[markerID].hdz->y + markers[markerID].hdz->h : markers[markerID].hdz->y - markers[markerID].hdz->h,
-		0,
-		picture, 0x05
-		);
-	win->add( img );
-	markers[markerID].imageVector.push_back( img );
-}
 
 void TcpRequestThread::setSocket(SOCKET _socket, sockaddr_in _from) {
 	socket = _socket;
@@ -289,7 +297,21 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 			cout << "delete tmp.jpg" << endl;
 			system("del tmp.jpg");
 
-			showImage(mMarkerID);
+			char* target = "target.png";
+
+			//RGBATexture* picture = textures[3];//new RGBATexture( "target.png" );
+	
+			MyImage* img = new MyImage(
+				200,
+				150,
+				markers[markerID].hdz->x,
+				markers[markerID].hdz->y < 0 ? markers[markerID].hdz->y + markers[markerID].hdz->h : markers[markerID].hdz->y - markers[markerID].hdz->h,
+				0,
+				NULL, 0x05
+				);
+			img->setImage(target);
+			win->add( img );
+			markers[markerID].imageVector.push_back( img );
 
 			break;
 		}
@@ -509,25 +531,26 @@ int main( int argc, char* argv[] ) {
 	TcpServerThread* server = new TcpServerThread();
 	AfxBeginThread(TcpServerThread::TcpServerThreadStaticEntryPoint, (void*)server);
 	
-	srandom(45890);
-	// load example images as textures
-	for (int i = mouse+1; i < argc; i++) {
-		RGBATexture* tmp = new RGBATexture( argv[i] );
-		MyImage* img = new MyImage( 
-			tmp->width(1)/5, 
-			tmp->height(1)/5,
-			(int)(((double)random()/(double)RAND_MAX)*700-350),
-			(int)(((double)random()/(double)RAND_MAX)*450-225),
-			(int)(((double)random()/(double)RAND_MAX)*360),
-			tmp, 0xFF
-		);
-		win->add( img );
-	}
+	//srandom(45890);
+	//// load example images as textures
+	//for (int i = mouse+1; i < argc; i++) {
+	//	RGBATexture* tmp = new RGBATexture( argv[i] );
+	//	MyImage* img = new MyImage( 
+	//		tmp->width(1)/5, 
+	//		tmp->height(1)/5,
+	//		(int)(((double)random()/(double)RAND_MAX)*700-350),
+	//		(int)(((double)random()/(double)RAND_MAX)*450-225),
+	//		(int)(((double)random()/(double)RAND_MAX)*360),
+	//		tmp, 0xFF
+	//	);
+	//	win->add( img );
+	//}
 
 	
-	textures[0] = new RGBATexture( "img00042.png" );
-	textures[1] = new RGBATexture( "img00052.png");
-	textures[2] = new RGBATexture( "img00054.png" );
+	//textures[0] = new RGBATexture( "img00042.png" );
+	//textures[1] = new RGBATexture( "img00052.png" );
+	//textures[2] = new RGBATexture( "img00054.png" );
+	//textures[3] = new RGBATexture( "target.png" );
 	
 	win->update();
 	// keep looping on window thread
