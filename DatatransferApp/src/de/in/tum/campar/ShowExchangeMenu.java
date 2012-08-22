@@ -100,7 +100,7 @@ public class ShowExchangeMenu extends Activity {
 	private TcpClientService mTcpClientService;
 	private ImageView imgView;
 	ArrayList<Bitmap> bitmapList;
-	private Bitmap yourSelectedImage;
+	private Bitmap yourSelectedImage = null;
 	private String filePath;
 	public static final String TAG = "ShowExchangeMenu";
 	private ProgressDialog progressDialog;
@@ -343,6 +343,9 @@ public class ShowExchangeMenu extends Activity {
 				filePath = cursor.getString(columnIndex);
 				cursor.close();
 
+				if(yourSelectedImage != null)
+					yourSelectedImage.recycle();
+				
 				yourSelectedImage = BitmapFactory.decodeFile(filePath);
 				imgView.setImageBitmap(yourSelectedImage);
 
