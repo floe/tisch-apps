@@ -5,146 +5,87 @@
 \*************************************************************************/
 #include "Datatransfer\datatransfer.h"
 
-#include <stdlib.h>
-#include <nanolibc.h>
-
-#include "Window.h"
-#include <typeinfo>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include "BlobMarker.h"
-#include "BlobCount.h"
-#include "BlobPos.h"
-
-#include "Label.h"
-#include "Motion.h"
-
-using namespace std;
-
-class HandyDropZone: public Container {
-public:
-	HandyDropZone( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x05):
-	Container( _w, _h, _x, _y, 0, _tex, mode )
-	{
-		shadow = true;
-	}
-
-	void deleteMe() {
-		parent->remove(this);
-		delete this;
-	}
-};
-
-struct MarkerID {
-	int markerID;
-	TcpRequestThread* thread;
-	sockaddr_in connectInfoMobile;
-	bool active;
-	HandyDropZone* hdz;
-	vector<Container*> imageVector;
-};
-
 Window* win = 0;
 
 std::map<int, MarkerID> markers;
 
-//RGBATexture* textures[4];
-
-class MyImage: public Container {
-public:
-    MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
-    Container( _w, _h, _x, _y, angle, _tex, mode)
-    {}
-
-	void setImage(char* imgName) {
-		imageName = new char[strlen(imgName)+1];
-		strcpy(imageName, imgName);
-		cout << "imageName: " << imageName << endl;
+void MyImage::setImage(char* imgName) {
+	imageName = new char[strlen(imgName)+1];
+	strcpy(imageName, imgName);
+	cout << "imageName: " << imageName << endl;
 		
-	}
+}
 
-    void action( Gesture* gesture ) {
-		if( gesture->name() == "release" )
-		{
-			for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
-				if(it->second.hdz == NULL)
-					continue;
-				if((x > it->second.hdz->x - ( 0.5f * it->second.hdz->w)) && (x < it->second.hdz->x + ( 0.5f * it->second.hdz->w)))
+void MyImage::action( Gesture* gesture ) {
+	if( gesture->name() == "release" )
+	{
+		for(map<int, MarkerID>::iterator it = markers.begin(); it != markers.end(); it++) {
+			if(it->second.hdz == NULL)
+				continue;
+			if((x > it->second.hdz->x - ( 0.5f * it->second.hdz->w)) && (x < it->second.hdz->x + ( 0.5f * it->second.hdz->w)))
+			{
+				if((y > it->second.hdz->y - ( 0.5f * it->second.hdz->h)) && (y < it->second.hdz->y + ( 0.5f * it->second.hdz->h)))
 				{
-					if((y > it->second.hdz->y - ( 0.5f * it->second.hdz->h)) && (y < it->second.hdz->y + ( 0.5f * it->second.hdz->h)))
-					{
-						//send "texture" to phone
-						std::cout << "Copy me to " << it->first << std::endl;
-						break;
-					}
+					//send "texture" to phone
+					std::cout << "Copy me to " << it->first << std::endl;
+					break;
 				}
 			}
 		}
-        else
-            Container::action(gesture);
-    }
+	}
+    else
+        Container::action(gesture);
+}
 
-	void draw() {
-		enter();
+void MyImage::draw() {
+	enter();
 
-		//cout << "draw fkt" << endl;
-		if(imageName != NULL) {
-			//cout << "overwrite mytex" << endl;
-			mytex = new RGBATexture( imageName );
-		}
-
-		Widget::paint();
-		paint();
-		leave();
+	//cout << "draw fkt" << endl;
+	if(imageName != NULL) {
+		//cout << "overwrite mytex" << endl;
+		mytex = new RGBATexture( imageName );
 	}
 
-protected:
-	char* imageName;
-};
+	Widget::paint();
+	paint();
+	leave();
+}
 
-class InteractionArea: public Container {
-public:
-	InteractionArea(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x00):
-	Container( _w, _h, _x, _y, angle, _tex, mode)
-	{
-		Gesture handy( "handy", GESTURE_FLAGS_DEFAULT|GESTURE_FLAGS_STICKY);
-		handy.push_back(new BlobMarker(1<<INPUT_TYPE_FINGER));
-		handy.push_back(new BlobPos(1<<INPUT_TYPE_FINGER));
-		region.gestures.push_back( handy );
-	}
-
-	void action( Gesture* gesture ) {
+void InteractionArea::action( Gesture* gesture ) {
 		
-		if( gesture->name() == "handy" ) {
-			cout << "gesture: " << gesture->name() << endl;
-			FeatureBase* f = (*gesture)[0];
-			BlobMarker* bm = dynamic_cast<BlobMarker*>(f);
-			int markerIDtmp = bm->result();
-			cout << "MID: " << markerIDtmp << endl;
-			if(markerIDtmp > 0 && !markers[markerIDtmp].active) {
+	if( gesture->name() == "handy" ) {
+		cout << "gesture: " << gesture->name() << endl;
+		FeatureBase* f = (*gesture)[0];
+		BlobMarker* bm = dynamic_cast<BlobMarker*>(f);
+		int markerIDtmp = bm->result();
+		cout << "MID: " << markerIDtmp << endl;
+		if(markerIDtmp > 0 && !markers[markerIDtmp].active) {
 					
-				activateMarker(markerIDtmp);
+			activateMarker(markerIDtmp);
 
-				RGBATexture* texture = new RGBATexture( TISCH_PREFIX "Box.png" );
+			RGBATexture* texture = new RGBATexture( TISCH_PREFIX "Box.png" );
 					
-				f = (*gesture)[1];
-				BlobPos* bp = dynamic_cast<BlobPos*>(f);
-				Vector blobPos = bp->result();
-				cout << "BlobPos: " << blobPos.x << " " << blobPos.y << endl;
-				transform(blobPos,1);
-				blobPos.z = 0;
-				blobPos.normalize();
-				cout << "BlobPos: " << blobPos.x << " " << blobPos.y << endl;
-				markers[markerIDtmp].hdz = new HandyDropZone(150, 200, blobPos.x * win->getWidth() * 0.5f, blobPos.y * win->getHeight() * 0.5f, 0.0, new RGBATexture( "handy.png" ));
-				markers[markerIDtmp].active = true;
+			f = (*gesture)[1];
+			BlobPos* bp = dynamic_cast<BlobPos*>(f);
+			Vector blobPos = bp->result();
+			cout << "BlobPos: " << blobPos.x << " " << blobPos.y << endl;
+			transform(blobPos,1);
+			blobPos.z = 0;
+			blobPos.normalize();
+			cout << "BlobPos: " << blobPos.x << " " << blobPos.y << endl;
+			markers[markerIDtmp].hdz = new HandyDropZone(150,
+				200,
+				blobPos.x * win->getWidth() * 0.5f,
+				blobPos.y * win->getHeight() * 0.5f,
+				0.0,
+				new RGBATexture( "handy.png" ));
 
-				win->add(markers[markerIDtmp].hdz);
-			}
-		} // if( gesture->name() == "handy" )
-	} // void action( Gesture* gesture )
+			markers[markerIDtmp].active = true;
 
-};
+			win->add(markers[markerIDtmp].hdz);
+		}
+	} // if( gesture->name() == "handy" )
+} // void action( Gesture* gesture )
 
 void TcpRequestThread::setSocket(SOCKET _socket, sockaddr_in _from) {
 	socket = _socket;
@@ -254,6 +195,13 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 				markers[mMarkerID].active = false;
 				markers[mMarkerID].connectInfoMobile = zero_sockaddr_in;
 			
+				// remove all images belonging to this handy from screen
+				std::vector<MyImage*> imgVec = markers[mMarkerID].imageVector;
+				cout << "imgVes size: " << imgVec.size() << endl;
+				for(int i = 0; i < imgVec.size(); i++ ) {
+					imgVec.at(i)->deleteMe();
+				}
+				
 				// remove HandyDropZone from display
 				markers[mMarkerID].hdz->deleteMe();
 				markers[mMarkerID].hdz = NULL;
@@ -292,27 +240,30 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 			
 			cout << "convert jpg to png" << endl;
 			system("convert tmp.jpg target.png");
+
 			cout << "resizing png" << endl;
 			system("mogrify -resize 15% target.png");
+			
 			cout << "delete tmp.jpg" << endl;
 			system("del tmp.jpg");
 
 			char* target = "target.png";
 
-			//RGBATexture* picture = textures[3];//new RGBATexture( "target.png" );
-	
 			MyImage* img = new MyImage(
 				200,
 				150,
-				markers[markerID].hdz->x,
-				markers[markerID].hdz->y < 0 ? markers[markerID].hdz->y + markers[markerID].hdz->h : markers[markerID].hdz->y - markers[markerID].hdz->h,
+				markers[mMarkerID].hdz->x,
+				markers[mMarkerID].hdz->y < 0 ? markers[mMarkerID].hdz->y + markers[mMarkerID].hdz->h : markers[mMarkerID].hdz->y - markers[mMarkerID].hdz->h,
 				0,
 				NULL, 0x05
 				);
+
 			img->setImage(target);
 			win->add( img );
-			markers[markerID].imageVector.push_back( img );
-
+			cout << "add image to Vector with markerID " << mMarkerID << endl;
+			cout << "before add size: " << markers[mMarkerID].imageVector.size() << endl;
+			markers[mMarkerID].imageVector.push_back( img );
+			cout << "after add size: " << markers[mMarkerID].imageVector.size() << endl;
 			break;
 		}
 	default: {
