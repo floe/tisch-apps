@@ -28,6 +28,37 @@ void MyImage::action( Gesture* gesture ) {
 				{
 					//send "texture" to phone
 					std::cout << "Copy me to " << it->first << std::endl;
+					int headerSize = 8;
+					int messageSize = headerSize + JPG_data_size;
+					SendToMobile* msgToMobil = new SendToMobile();
+					unsigned char* msg = new unsigned char[messageSize];
+					// | contentType = (int) 20 | markerID | imagedata |
+					
+					int contentType = htonl(20); // send Image
+					msg[0] = (contentType >> 0) & 0xff;
+					msg[1] = (contentType >> 8) & 0xff;
+					msg[2] = (contentType >> 16) & 0xff;
+					msg[3] = (contentType >> 24) & 0xff;
+
+					int targetMarkerID = it->first;
+					int targetMarkerIDnet = htonl(targetMarkerID);
+					msg[4] = (targetMarkerIDnet >> 0) & 0xff;
+					msg[5] = (targetMarkerIDnet >> 8) & 0xff;
+					msg[6] = (targetMarkerIDnet >> 16) & 0xff;
+					msg[7] = (targetMarkerIDnet >> 24) & 0xff;
+
+					// skip the first 8 chars and save image data thereafter
+					memcpy(msg+8, JPG_data, sizeof(unsigned char));
+					cout << "message prepared to send to mobile" << endl;
+
+					msgToMobil->sendMessageToMobile(msg, messageSize);
+					msgToMobil->mobileIP = markers[targetMarkerID].connectInfoMobile.sin_addr.S_un.S_addr;
+					msgToMobil->mobilePort = 8080;
+					AfxBeginThread(SendToMobile::SendToMobileStaticEntryPoint, (void*) msgToMobil);
+
+					// update HDZs were image is connected to
+					belongsToHDZ.push_back(it->second.hdz);
+
 					break;
 				}
 			}
@@ -40,10 +71,10 @@ void MyImage::action( Gesture* gesture ) {
 void MyImage::draw() {
 	enter();
 
-	//cout << "draw fkt" << endl;
 	if(imageName != NULL) {
-		//cout << "overwrite mytex" << endl;
 		mytex = new RGBATexture( imageName );
+		cout << "MyImage draw load texture" << endl;
+		imageName = NULL;
 	}
 
 	Widget::paint();
@@ -81,6 +112,7 @@ void InteractionArea::action( Gesture* gesture ) {
 				new RGBATexture( "handy.png" ));
 
 			markers[markerIDtmp].active = true;
+			markers[markerIDtmp].hdz->myMarkerID = markerIDtmp;
 
 			win->add(markers[markerIDtmp].hdz);
 		}
@@ -194,12 +226,11 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 				// deactivate and reset connection info
 				markers[mMarkerID].active = false;
 				markers[mMarkerID].connectInfoMobile = zero_sockaddr_in;
-			
-				// remove all images belonging to this handy from screen
-				std::vector<MyImage*> imgVec = markers[mMarkerID].imageVector;
-				cout << "imgVes size: " << imgVec.size() << endl;
-				for(int i = 0; i < imgVec.size(); i++ ) {
-					imgVec.at(i)->deleteMe();
+
+				// notify all images belong to this HDZ that it leaves
+				std::vector<MyImage*> notityImgs = markers[mMarkerID].hdz->imageVector;
+				for (int i = 0; i < notityImgs.size(); i++) {
+					notityImgs.at(i)->removeHDZ(mMarkerID);
 				}
 				
 				// remove HandyDropZone from display
@@ -211,7 +242,7 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 	case 20: { // image received
 			// | contentType = (int) 20 | markerID | imagedata |
 			cout << "image received" << endl;
-			int headersize = 8;
+			int headersize = 8; // 4byte contentType, 4byte markerID
 			
 			int mMarkerID;
 			char cMarkerID[4] = { inMsgBuffer[4], inMsgBuffer[5], inMsgBuffer[6], inMsgBuffer[7] };
@@ -220,36 +251,37 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 			
 			cout << "markerID: " << mMarkerID << endl;
 
-			unsigned char* image = new unsigned char[recvBytes - headersize];
-			for(int i = 0; i < recvBytes - headersize; i++) {
-				if(i%100000 == 0)
-					cout << "i: " << i << endl;
-				image[i] = inMsgBuffer[i+headersize];
-			}
-			
+			unsigned char* jpg_image = new unsigned char[recvBytes - headersize];
+
+			// copy jpeg image data only, skipping header
+			memcpy(jpg_image, (unsigned char*)&inMsgBuffer[headersize], (recvBytes - headersize)*sizeof(unsigned char));
+
 			cout << "open file ... ";
 			ofstream outfile("tmp.jpg", ios::out | ios::binary);
 			if(!outfile) {
 				cout<<"Cannot open output file\n";
 			}
 			cout << "writing jpg to disk ... ";
-			outfile.write((char*)image, recvBytes - headersize);
+			outfile.write((char*)jpg_image, recvBytes - headersize);
 			cout << "done ... ";
 			outfile.close();
 			cout << "close" << endl;
 			
-			cout << "convert jpg to png" << endl;
+			cout << "convert jpg to png ... ";
 			system("convert tmp.jpg target.png");
+			cout << "done" << endl;
 
-			cout << "resizing png" << endl;
+			cout << "resizing png ... ";
 			system("mogrify -resize 15% target.png");
-			
-			cout << "delete tmp.jpg" << endl;
+			cout << "done" << endl;
+
+			cout << "delete tmp.jpg ... ";
 			system("del tmp.jpg");
+			cout << "done" << endl;
 
 			char* target = "target.png";
 
-			MyImage* img = new MyImage(
+			MyImage* my_img = new MyImage(
 				200,
 				150,
 				markers[mMarkerID].hdz->x,
@@ -258,12 +290,16 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 				NULL, 0x05
 				);
 
-			img->setImage(target);
-			win->add( img );
-			cout << "add image to Vector with markerID " << mMarkerID << endl;
-			cout << "before add size: " << markers[mMarkerID].imageVector.size() << endl;
-			markers[mMarkerID].imageVector.push_back( img );
-			cout << "after add size: " << markers[mMarkerID].imageVector.size() << endl;
+			my_img->setImage( target );
+			my_img->belongsToHDZ.push_back( markers[mMarkerID].hdz );
+			my_img->JPG_data = jpg_image;
+			my_img->JPG_data_size = recvBytes - headersize;
+
+			win->add( my_img );
+
+			// save my_img widget
+			markers[mMarkerID].hdz->imageVector.push_back( my_img );
+			
 			break;
 		}
 	default: {
@@ -481,27 +517,6 @@ int main( int argc, char* argv[] ) {
 	// start TCP Server waiting for connections
 	TcpServerThread* server = new TcpServerThread();
 	AfxBeginThread(TcpServerThread::TcpServerThreadStaticEntryPoint, (void*)server);
-	
-	//srandom(45890);
-	//// load example images as textures
-	//for (int i = mouse+1; i < argc; i++) {
-	//	RGBATexture* tmp = new RGBATexture( argv[i] );
-	//	MyImage* img = new MyImage( 
-	//		tmp->width(1)/5, 
-	//		tmp->height(1)/5,
-	//		(int)(((double)random()/(double)RAND_MAX)*700-350),
-	//		(int)(((double)random()/(double)RAND_MAX)*450-225),
-	//		(int)(((double)random()/(double)RAND_MAX)*360),
-	//		tmp, 0xFF
-	//	);
-	//	win->add( img );
-	//}
-
-	
-	//textures[0] = new RGBATexture( "img00042.png" );
-	//textures[1] = new RGBATexture( "img00052.png" );
-	//textures[2] = new RGBATexture( "img00054.png" );
-	//textures[3] = new RGBATexture( "target.png" );
 	
 	win->update();
 	// keep looping on window thread

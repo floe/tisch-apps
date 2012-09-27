@@ -23,5 +23,11 @@
     <ClInclude Include="datatransfer.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="MyImage.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="HandyDropZone.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

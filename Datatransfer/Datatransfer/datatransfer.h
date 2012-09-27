@@ -10,8 +10,6 @@
 	#include <WinSock2.h>
 	//#include <WinSock.h>
 	typedef int socklen_t;
-
-	
 #else
 	#include <sys/socket.h>
 	#include <netinet/in.h>
@@ -36,24 +34,13 @@
 #include "Motion.h"
 #include <map>
 
+#include "MyImage.h"
+#include "HandyDropZone.h"
+
 using namespace std;
 
 static const struct sockaddr_in zero_sockaddr_in;
 void activateMarker(int markerID);
-
-class HandyDropZone : public Container {
-public:
-	HandyDropZone( int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x05):
-	Container( _w, _h, _x, _y, 0, _tex, mode ) {
-		shadow = true;
-	};
-
-	virtual void deleteMe() {
-		cout << "HDZ deleteMe()" << endl;
-		parent->remove(this);
-		delete this;
-	}
-};
 
 class TcpRequestThread {
 public:
@@ -119,24 +106,6 @@ public:
 
 };
 
-class MyImage : public Container {
-public: MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0xFF):
-    Container( _w, _h, _x, _y, angle, _tex, mode) {
-	};
-
-	virtual void setImage(char* imgName);
-	virtual void action( Gesture* gesture);
-	virtual void draw();
-	virtual void deleteMe() {
-		cout << "MyImage deleteMe()" << endl;
-		parent->remove(this);
-		delete this;
-	}
-
-protected:
-	char* imageName;
-};
-
 class InteractionArea : public Container {
 public:
 	InteractionArea(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBATexture* _tex = 0, int mode = 0x00):
@@ -151,11 +120,17 @@ public:
 	virtual void action( Gesture* gesture );
 };
 
+struct ImageData {
+	MyImage* myImageWidget;
+	unsigned char* JPG_data;
+	int JPG_data_size;
+};
+
 struct MarkerID {
 	int markerID;
 	TcpRequestThread* thread;
 	sockaddr_in connectInfoMobile;
 	bool active;
 	HandyDropZone* hdz;
-	std::vector<MyImage*> imageVector;
+	
 };
