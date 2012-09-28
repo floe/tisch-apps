@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.Socket;
@@ -25,6 +26,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
@@ -123,6 +125,7 @@ public class ShowExchangeMenu extends Activity {
 		portTISCH = getIntent().getIntExtra("portTISCH", 8080);
 
 		mTcpClientService = TcpClientService.getInstance();
+		Log.d("ShowExchangeMenu", "update connection handler");
 		mTcpClientService.setConnectionHandler(handleConnection);
 
 		imgView = (ImageView) findViewById(R.id.selectedImage);
@@ -300,7 +303,7 @@ public class ShowExchangeMenu extends Activity {
 
 		mTcpClientService.sendFile(ipTISCH, portTISCH, new File(filePath),
 				header);
-		
+
 	}
 
 	public Handler handleConnection = new Handler() {
@@ -308,20 +311,53 @@ public class ShowExchangeMenu extends Activity {
 		@Override
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
-			if (progressDialog.isShowing())
+			if (progressDialog != null && progressDialog.isShowing())
 				progressDialog.dismiss();
 
 			Bundle myBundle = msg.getData();
 
+			Log.d("ShowExchangeMenu", "handleConnection; msg.what: " + msg.what);
+
 			switch (msg.what) {
 			case 20: // image received
 				byte[] imageData = myBundle.getByteArray("image");
+				Log.d("handle image", "received bytes: " + imageData.length);
+
+				for (int i = 0; i < imageData.length; i += 100000) {
+					Log.d("handle image", "imgD: " + imageData[i]);
+				}
+
 				Bitmap bmp = BitmapFactory.decodeByteArray(imageData, 0,
 						imageData.length);
+				Log.d("handle image",
+						"bmp w*h: " + bmp.getWidth() + "*" + bmp.getHeight());
+
+				ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+				bmp.compress(Bitmap.CompressFormat.JPEG, 40, bytes);
+
+				// you can create a new file name "test.jpg" in sdcard
+				// folder.
+				String filename = Environment.getExternalStorageDirectory()
+						+ File.separator + "DCIM" + File.separator + "Camera"
+						+ File.separator + "IMG001.jpg";
+				
+				File f;
+				f = new File(filename);
+				try {
+					f.createNewFile();
+					// write the bytes in file
+					FileOutputStream fo = new FileOutputStream(f);
+					fo.write(bytes.toByteArray());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://"+ Environment.getExternalStorageDirectory())));
+				Log.d("handle image", "new image saved to: " + filename);
 				break;
 
 			}
-		}
+		} // handleMessage
 
 	};
 
@@ -343,9 +379,9 @@ public class ShowExchangeMenu extends Activity {
 				filePath = cursor.getString(columnIndex);
 				cursor.close();
 
-				if(yourSelectedImage != null)
+				if (yourSelectedImage != null)
 					yourSelectedImage.recycle();
-				
+
 				yourSelectedImage = BitmapFactory.decodeFile(filePath);
 				imgView.setImageBitmap(yourSelectedImage);
 

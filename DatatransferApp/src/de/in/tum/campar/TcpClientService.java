@@ -327,33 +327,57 @@ public class TcpClientService extends Service {
 
 				// read payload
 				dis.readFully(receive_buffer);
-				for (int i = 0; i < receive_buffer.length; i++) {
-					Log.d("TcpRequest", "receive_buffer[" + i + "]: "
-							+ receive_buffer[i]);
-				}
-
-				int contentType = (int) receive_buffer[3]; // ToDo: we need
-															// something better
-															// here!
-				Log.d("TcpRequest", "contentType: " + contentType);
-
-				byte content[] = new byte[receive_buffer.length];// Arrays.copyOfRange(receive_buffer,
-																	// 4,
-																	// receive_buffer.length);
-				for (int i = 4; i < receive_buffer.length; i++) {
-					content[i - 4] = receive_buffer[i];
-				}
-
+				int contentType = ((0xFF & receive_buffer[0]) << 24)
+						| ((0xFF & receive_buffer[1]) << 16)
+						| ((0xFF & receive_buffer[2]) << 8)
+						| (0xFF & receive_buffer[3]);
+				
 				msg.what = contentType;
-
+				byte content[];
+				
 				switch (contentType) {
 				case 0: // markerID, handler in DatatransferAppActivitiy
+					Log.d("TcpRequest", "case: "+ contentType);
 				case 1: // marker found
+					Log.d("TcpRequest", "marker found, case: " + contentType);
+					
+					content = new byte[in_len - 4]; // 4 byte as header, markerID as 32 bit int
+					// copy subarray to new array
+					// from receive_buffer, pos 8
+					// to content, pos 0
+					// copy in_len-8 elements
+					System.arraycopy(receive_buffer, 4, content, 0, in_len - 4);
+
 					mBundle.putByteArray("markerID", content);
 					break;
 
 				case 20: // image, handler in ShowExchangeMenu
+					Log.d("TcpRequest", "received image, case: " + contentType);
+					
+					content = new byte[in_len - 8]; // 2 x 4 byte as header, (contentType, markerID) each as 32 bit int
+					// copy subarray to new array
+					// from receive_buffer, pos 8
+					// to content, pos 0
+					// copy in_len-8 elements
+					System.arraycopy(receive_buffer, 8, content, 0, in_len - 8);
+					
+					Log.d("TcpRequest", "content has size: " + content.length);
+					
+					int targetMarkerID = ((0xFF & receive_buffer[4]) << 24)
+							| ((0xFF & receive_buffer[5]) << 16)
+							| ((0xFF & receive_buffer[6]) << 8)
+							| (0xFF & receive_buffer[7]);
+					
+					Log.d("TcpRequest", "targetMarkerID is: " + targetMarkerID);
+					
+					mBundle.putInt("targetMarkerID", targetMarkerID);
 					mBundle.putByteArray("image", content);
+					
+					for(int i = 0; i < content.length; i += 100000) {
+						Log.d("TcpRequest", "imgD: " + content[i]);
+					}
+					
+					Log.d("TcpRequest", "mBundle ready, jump back");
 					break;
 
 				default:
