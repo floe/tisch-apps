@@ -30,6 +30,7 @@ void MyImage::action( Gesture* gesture ) {
 					std::cout << "Copy me to " << it->first << std::endl;
 					int headerSize = 8;
 					int messageSize = headerSize + JPG_data_size;
+					cout << "messageSize to send: " << messageSize << endl;
 					SendToMobile* msgToMobil = new SendToMobile();
 					unsigned char* msg = new unsigned char[messageSize];
 					// | contentType = (int) 20 | markerID | imagedata |
@@ -40,6 +41,8 @@ void MyImage::action( Gesture* gesture ) {
 					msg[2] = (contentType >> 16) & 0xff;
 					msg[3] = (contentType >> 24) & 0xff;
 
+					cout << "contentType set" << endl;
+
 					int targetMarkerID = it->first;
 					int targetMarkerIDnet = htonl(targetMarkerID);
 					msg[4] = (targetMarkerIDnet >> 0) & 0xff;
@@ -47,8 +50,25 @@ void MyImage::action( Gesture* gesture ) {
 					msg[6] = (targetMarkerIDnet >> 16) & 0xff;
 					msg[7] = (targetMarkerIDnet >> 24) & 0xff;
 
+					cout << "targetMarkerID set" << endl;
+
+					for(int i = 0; i < JPG_data_size; i += 100000) {
+						cout << i << " " << JPG_data[i] << endl;
+					}
+					
 					// skip the first 8 chars and save image data thereafter
-					memcpy(msg+8, JPG_data, sizeof(unsigned char));
+					memcpy(msg + 8 * sizeof(unsigned char), JPG_data, JPG_data_size * sizeof(unsigned char));
+					
+					cout << "header data:" << endl;
+					for(int i = 0; i < 8; i++) {
+						cout << i << " >" << msg[i] << "<" << endl;
+					}
+					
+					cout << "body data:" << endl;
+					for(int i = 8; i < messageSize; i += 100000) {
+						cout << i << " >" << msg[i] << "<" << endl;
+					}
+
 					cout << "message prepared to send to mobile" << endl;
 
 					msgToMobil->sendMessageToMobile(msg, messageSize);
@@ -58,6 +78,7 @@ void MyImage::action( Gesture* gesture ) {
 
 					// update HDZs were image is connected to
 					belongsToHDZ.push_back(it->second.hdz);
+					cout << "HDZ updated" << endl;
 
 					break;
 				}
@@ -73,7 +94,10 @@ void MyImage::draw() {
 
 	if(imageName != NULL) {
 		mytex = new RGBATexture( imageName );
-		cout << "MyImage draw load texture" << endl;
+		cout << "MyImage draw load texture ";
+		string delTargetPNG = string("del " + string(imageName));
+		system(delTargetPNG.c_str());
+		cout << "target.png tmp file deleted" << endl;
 		imageName = NULL;
 	}
 
