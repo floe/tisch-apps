@@ -76,9 +76,13 @@ void MyImage::action( Gesture* gesture ) {
 					msgToMobil->mobilePort = 8080;
 					AfxBeginThread(SendToMobile::SendToMobileStaticEntryPoint, (void*) msgToMobil);
 
-					// update HDZs were image is connected to
+					// update the target HDZ that it has a new image
+					markers[targetMarkerID].hdz->imageVector.push_back( this );
+
+					// update this image to which HDZs it belongs
+					cout << "HDZ size: " << belongsToHDZ.size() << endl;
 					belongsToHDZ.push_back(it->second.hdz);
-					cout << "HDZ updated" << endl;
+					cout << "HDZ size: " << belongsToHDZ.size() << endl;
 
 					break;
 				}

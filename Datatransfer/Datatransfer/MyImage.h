@@ -40,17 +40,19 @@ public: MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBA
 
 	void removeHDZ(int markerID) {
 		// find the pointer to HDZ in vector and remove it
-		//cout << "find pointer to HDZ, size: " << belongsToHDZ.size() << endl;
+		
+		cout << "myImage belongs to: " << belongsToHDZ.size() << " HDZ" << endl;
 		for (std::vector<HandyDropZone*>::iterator iter = belongsToHDZ.begin(); iter != belongsToHDZ.end(); iter++) {
 			//cout << "HDZ markerID: " << (*(iter))->myMarkerID << endl;
 			//cout << "markerID: " << markerID << endl;
 			if ((*(iter))->myMarkerID == markerID) {
+				cout << "remove reference to marker " << markerID << endl;
 				iter = belongsToHDZ.erase(iter);
 				break;
 			}
 		}
 
-		//cout << "new size: " << belongsToHDZ.size() << endl;
+		cout << "myImage belongs to: " << belongsToHDZ.size() << " HDZ" << endl;
 		if(belongsToHDZ.size() == 0) {
 			cout << "no reference left, delete myImage" << endl;
 			// no other HZD is refering to this image
