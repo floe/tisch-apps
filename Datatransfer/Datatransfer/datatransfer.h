@@ -19,6 +19,10 @@
 	#define SOCKADDR struct sockaddr
 #endif
 
+extern "C" {
+#include <jpeglib.h>
+}
+
 #include <stdlib.h>
 #include <nanolibc.h>
 #include "Window.h"
@@ -47,6 +51,9 @@ public:
 	int markerID;
 	SOCKET socket;
 	sockaddr_in from;
+	/* we will be using this uninitialized pointer later to store raw, uncompressd image */
+	unsigned char *raw_image;
+	unsigned int size;
 	
 	static UINT TcpRequestThreadStaticEntryPoint(LPVOID pThis) {
 		TcpRequestThread* pthisTcpRequest = (TcpRequestThread*) pThis;
@@ -60,6 +67,7 @@ public:
 	//void activateMarker(int markerID);
 
 	void TcpRequestThreadEntryPoint();
+	void print_jpeg_info(struct jpeg_decompress_struct cinfo);
 };
 
 class TcpServerThread {
@@ -134,3 +142,10 @@ struct MarkerID {
 	HandyDropZone* hdz;
 	
 };
+
+struct my_error_mgr {
+	struct jpeg_error_mgr pub;
+	jmp_buf setjmp_buffer;
+};
+
+typedef struct my_error_mgr* my_error_ptr;

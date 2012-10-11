@@ -30,7 +30,7 @@ public: MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBA
     Container( _w, _h, _x, _y, angle, _tex, mode) {
 	};
 
-	virtual void setImage(char* imgName);
+	virtual void setRawTexture( unsigned char* _texture, int _tex_width, int _tex_height );
 	virtual void action( Gesture* gesture);
 	virtual void draw();
 	void deleteMe() {
@@ -62,7 +62,8 @@ public: MyImage(int _w, int _h, int _x = 0, int _y = 0, double angle = 0.0, RGBA
 	std::vector<HandyDropZone*> belongsToHDZ;
 	unsigned char* JPG_data;
 	int JPG_data_size;
-protected:
-	char* imageName;
 	
+protected:
+	int tex_width, tex_height, load_Tex;
+	unsigned char* raw_image;
 };

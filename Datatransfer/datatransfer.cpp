@@ -9,11 +9,11 @@ Window* win = 0;
 
 std::map<int, MarkerID> markers;
 
-void MyImage::setImage(char* imgName) {
-	imageName = new char[strlen(imgName)+1];
-	strcpy(imageName, imgName);
-	cout << "imageName: " << imageName << endl;
-		
+void MyImage::setRawTexture(unsigned char* _texture, int _tex_width, int _tex_height) {
+	raw_image = _texture;
+	load_Tex = 1;
+	tex_width = _tex_width;
+	tex_height = _tex_height;
 }
 
 void MyImage::action( Gesture* gesture ) {
@@ -92,14 +92,26 @@ void MyImage::action( Gesture* gesture ) {
 void MyImage::draw() {
 	enter();
 
-	if(imageName != NULL) {
+	if( load_Tex == 1) {
+		cout << "load Texture" << endl;
+		load_Tex = 0;
+		cout << "w: " << tex_width << " h: " << tex_height << endl;
+		RGBATexture* mytexTmp = new RGBATexture( tex_width, tex_height );
+		mytexTmp->load( raw_image, GL_RGB, GL_UNSIGNED_BYTE );
+		cout << "free mem ";
+		free(raw_image);
+		cout << "done" << endl;
+
+		mytex = mytexTmp;
+	}
+	/*if(imageName != NULL) {
 		mytex = new RGBATexture( imageName );
 		cout << "MyImage draw load texture ";
 		string delTargetPNG = string("del " + string(imageName));
 		system(delTargetPNG.c_str());
 		cout << "target.png tmp file deleted" << endl;
 		imageName = NULL;
-	}
+	}*/
 
 	Widget::paint();
 	paint();
@@ -146,6 +158,17 @@ void InteractionArea::action( Gesture* gesture ) {
 void TcpRequestThread::setSocket(SOCKET _socket, sockaddr_in _from) {
 	socket = _socket;
 	from = _from;
+}
+
+/**
+ * print the information for what was stored in the JPEG File
+ **/
+void TcpRequestThread::print_jpeg_info(struct jpeg_decompress_struct cinfo) {
+    printf("JPEG File Information: \n");
+    printf("Image width and height: %d pixels and %d pixels.\n", cinfo.image_width, cinfo.image_height);
+    printf("Color components per pixel: %d.\n", cinfo.num_components);
+    printf("Color space: %d.\n", cinfo.jpeg_color_space);
+    printf("Raw flag is: %d.\n", cinfo.raw_data_out);
 }
 
 void TcpRequestThread::TcpRequestThreadEntryPoint() {
@@ -276,35 +299,53 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 			cout << "markerID: " << mMarkerID << endl;
 
 			unsigned char* jpg_image = new unsigned char[recvBytes - headersize];
-
+			
 			// copy jpeg image data only, skipping header
 			memcpy(jpg_image, (unsigned char*)&inMsgBuffer[headersize], (recvBytes - headersize)*sizeof(unsigned char));
 
-			cout << "open file ... ";
-			ofstream outfile("tmp.jpg", ios::out | ios::binary);
-			if(!outfile) {
-				cout<<"Cannot open output file\n";
-			}
-			cout << "writing jpg to disk ... ";
-			outfile.write((char*)jpg_image, recvBytes - headersize);
-			cout << "done ... ";
-			outfile.close();
-			cout << "close" << endl;
+			/* these are standard libjpeg structures for reading(decompression) */
+			struct jpeg_decompress_struct cinfo;
+			struct jpeg_error_mgr jerr;
+			/* libjpeg data structure for storing one row, that is, scanline of an image */
+			JSAMPROW row_pointer[1];
+			unsigned long location = 0;
+			int i = 0;
+
+			//char* filename;
+			//FILE *infile = fopen(filename, "rb");
+			//if (!infile) {
+			//	printf("Error opening jpeg file %s\n!", filename);
+			//}
 			
-			cout << "convert jpg to png ... ";
-			system("convert tmp.jpg target.png");
-			cout << "done" << endl;
+			/* here we set up the standard libjpeg error handler */
+			cinfo.err = jpeg_std_error(&jerr);
+			/* setup decompression process and source, then read JPEG header */
+			jpeg_create_decompress(&cinfo);
 
-			cout << "resizing png ... ";
-			system("mogrify -resize 15% target.png");
-			cout << "done" << endl;
+			/* this makes the library read from infile */
+			//jpeg_stdio_src(&cinfo, infile);
 
-			cout << "delete tmp.jpg ... ";
-			system("del tmp.jpg");
-			cout << "done" << endl;
+			/* this makes the library read from memory */
+			jpeg_mem_src(&cinfo, jpg_image, recvBytes - headersize);
 
-			char* target = "target.png";
+			/* reading the image header which contains image information */
+			jpeg_read_header(&cinfo, TRUE);
+			print_jpeg_info(cinfo);
+			jpeg_start_decompress(&cinfo);
 
+			/* allocate memory to hold the uncompressed image */
+			size = cinfo.output_width*cinfo.output_height*cinfo.num_components;
+			raw_image = (unsigned char*)malloc(size);
+			/* now actually read the jpeg into the raw buffer */
+			row_pointer[0] = (unsigned char *)malloc(cinfo.output_width*cinfo.num_components);
+			/* read one scan line at a time */
+			while (cinfo.output_scanline < cinfo.image_height) {
+				jpeg_read_scanlines( &cinfo, row_pointer, 1 );
+				for (i=0; i<cinfo.image_width*cinfo.num_components;i++) {
+					raw_image[location++] = row_pointer[0][i];
+				}
+			}
+			
 			MyImage* my_img = new MyImage(
 				200,
 				150,
@@ -314,7 +355,7 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 				NULL, 0x05
 				);
 
-			my_img->setImage( target );
+			my_img->setRawTexture(raw_image, cinfo.image_width, cinfo.image_height);
 			my_img->belongsToHDZ.push_back( markers[mMarkerID].hdz );
 			my_img->JPG_data = jpg_image;
 			my_img->JPG_data_size = recvBytes - headersize;
@@ -323,7 +364,14 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 
 			// save my_img widget
 			markers[mMarkerID].hdz->imageVector.push_back( my_img );
-			
+
+			/* wrap up decompression, destroy objects, free pointers */
+			jpeg_finish_decompress(&cinfo);
+			jpeg_destroy_decompress(&cinfo);
+			free(row_pointer[0]);
+			//fclose(infile);
+			/* yup, we succeeded! */
+
 			break;
 		}
 	default: {
