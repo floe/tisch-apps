@@ -137,6 +137,7 @@ public class TcpClientService extends Service {
 
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				new Intent(this, mMainActivity.getClass()), 0);
+		
 		notification.setLatestEventInfo(this,
 				getText(R.string.tcpServiceStarted), text, contentIntent);
 
@@ -458,35 +459,6 @@ public class TcpClientService extends Service {
 
 		}
 
-		
-		private Bitmap codec2(Bitmap src, Bitmap.CompressFormat format,
-				int quality) {
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			src.compress(format, quality, os);
-	 
-			byte[] array = os.toByteArray();
-			return BitmapFactory.decodeByteArray(array, 0, array.length);
-		}
-		
-		private File codec(Bitmap src, Bitmap.CompressFormat format,
-				int quality) {
-			
-			File tmp = new File("/mnt/sdcard/tmpImage.png");
-			try {
-				OutputStream ostream = new FileOutputStream(tmp);
-				src.compress(format, quality, ostream);
-				ostream.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			return tmp;
-			
-		}
-
 		// ------------------------------------------------------------------------
 		//
 		// ------------------------------------------------------------------------
@@ -528,9 +500,6 @@ public class TcpClientService extends Service {
 
 			dos.write(toServer, 0, toServer.length);
 
-//			Bitmap bmp = BitmapFactory.decodeFile(file.getAbsolutePath());
-//			File image = codec(bmp, Bitmap.CompressFormat.PNG, 0);
-//			
 			FileInputStream fis = new FileInputStream(file);
 			bytesAvailable = fis.available();
 			bufferSize = Math.min(bytesAvailable, maxBufferSize);
@@ -545,8 +514,6 @@ public class TcpClientService extends Service {
 			}
 			dos.flush();
 			fis.close();
-			
-//			image.delete();
 
 		}
 

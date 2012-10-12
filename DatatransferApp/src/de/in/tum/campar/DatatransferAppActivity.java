@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -86,6 +87,16 @@ public class DatatransferAppActivity extends Activity {
 		super.onResume();
 		if(mTcpClientService != null)
 			mTcpClientService.setConnectionHandler(handleConnection);
+	}
+	
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+	}
+	
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
 	}
 
 	// -----------------------------------------------------------------------
@@ -181,6 +192,7 @@ public class DatatransferAppActivity extends Activity {
 		Intent tcpService = new Intent(mMainContext, TcpClientService.class);
 		TcpClientService.setMainActivity(mMainActivity);
 		TcpClientService.setMainContext(mMainContext);
+		Log.d("DataTransferApp", "main Activity is DatatransferAppActivity");
 		mStartedService = startService(tcpService);
 		Log.d("DataTransferApp", "TCP Client Service started");
 	}

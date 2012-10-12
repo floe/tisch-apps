@@ -18,12 +18,17 @@ import java.util.Arrays;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -31,12 +36,14 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
@@ -102,7 +109,7 @@ public class ShowExchangeMenu extends Activity {
 	private TcpClientService mTcpClientService;
 	private ImageView imgView;
 	ArrayList<Bitmap> bitmapList;
-	private Bitmap yourSelectedImage = null;
+	private Bitmap bitmap = null;
 	private String filePath;
 	public static final String TAG = "ShowExchangeMenu";
 	private ProgressDialog progressDialog;
@@ -112,14 +119,22 @@ public class ShowExchangeMenu extends Activity {
 	// -----------------------------------------------------------------------
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		if (savedInstanceState != null) {
+			this.filePath = savedInstanceState.getString("filePath");
+		}
 
-		setContentView(R.layout.showexchangemenu);
+		setContentView(R.layout.showexchangemenu_port);
 
 		Log.d("ShowExchangeMenu", "show exchange menu");
 
 		setDisplayOrientation();
 		setupButtonsAndListeners();
 
+		TcpClientService.setMainActivity(this);
+		TcpClientService.setMainContext(getApplicationContext());
+		Log.d("ShowExchangeMenu", "main Activity is ShowExtendedMenu");
+
+		
 		mMarkerID = getIntent().getByteArrayExtra("markerID");
 		ipTISCH = getIntent().getStringExtra("ipTISCH");
 		portTISCH = getIntent().getIntExtra("portTISCH", 8080);
@@ -129,38 +144,6 @@ public class ShowExchangeMenu extends Activity {
 		mTcpClientService.setConnectionHandler(handleConnection);
 
 		imgView = (ImageView) findViewById(R.id.selectedImage);
-	}
-
-	private Bitmap decodeFile(File f) {
-		try {
-			// Decode image size
-			BitmapFactory.Options o = new BitmapFactory.Options();
-			o.inJustDecodeBounds = true;
-			BitmapFactory.decodeStream(new FileInputStream(f), null, o);
-
-			// The new size we want to scale to
-			final int REQUIRED_SIZE = 150;
-
-			// Find the correct scale value. It should be the power of 2.
-			int width_tmp = o.outWidth, height_tmp = o.outHeight;
-			int scale = 1;
-			while (true) {
-				if (width_tmp / 2 < REQUIRED_SIZE
-						|| height_tmp / 2 < REQUIRED_SIZE)
-					break;
-				width_tmp /= 2;
-				height_tmp /= 2;
-				scale *= 2;
-			}
-
-			// Decode with inSampleSize
-			BitmapFactory.Options o2 = new BitmapFactory.Options();
-			o2.inSampleSize = scale;
-			return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
-
-		} catch (FileNotFoundException e) {
-		}
-		return null;
 	}
 
 	@Override
@@ -192,15 +175,36 @@ public class ShowExchangeMenu extends Activity {
 		return true;
 	}
 
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putString("filePath", filePath);
+	}
+
+	
+	@Override
+	protected void onDestroy() {
+		Log.d("ShowExchangeMenu", "onDestroy()");
+		closeConnection();
+		super.onDestroy();
+	}
+	
 	// -----------------------------------------------------------------------
 	// UI Interaction - Display and BackgroundService
 	// -----------------------------------------------------------------------
 	private void setDisplayOrientation() {
 		int display_orientation = getResources().getConfiguration().orientation;
-		if (display_orientation == 1)
-			setContentView(R.layout.showexchangemenu);
-		else
-			setContentView(R.layout.showexchangemenu);
+		if (display_orientation == 1) {
+			setContentView(R.layout.showexchangemenu_port);
+		} else {
+			setContentView(R.layout.showexchangemenu_land);
+		}
+
 	}
 
 	private void setupButtonsAndListeners() {
@@ -221,6 +225,8 @@ public class ShowExchangeMenu extends Activity {
 			Intent intent = new Intent(
 					Intent.ACTION_PICK,
 					android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+			intent.setType("image/*");
+
 			startActivityForResult(intent, 100);
 
 		}
@@ -249,51 +255,8 @@ public class ShowExchangeMenu extends Activity {
 		finish();
 	}
 
-	@SuppressLint("ParserError")
 	private void sendImage() {
 
-		// int bytesAvailable, bytesRead, bufferSize;
-		// byte[] buffer;
-		// int maxBufferSize = 1 * 1024 * 1024;
-		// int sentBytes = 0;
-		// long fileSize;
-		//
-		//
-		//
-		// Socket target;
-		// try {
-		// target = new Socket(ipTISCH, portTISCH);
-		// File f = new File(filePath);
-		// fileSize = f.length();
-		// DataOutputStream dos = new DataOutputStream(
-		// target.getOutputStream());
-		// int size = (int) (header.length + fileSize);
-		// dos.writeInt(size);
-		// dos.flush();
-		// dos.write(header);
-		//
-		// FileInputStream fis = new FileInputStream(f);
-		// bytesAvailable = fis.available();
-		// bufferSize = Math.min(bytesAvailable, maxBufferSize);
-		// buffer = new byte[bufferSize];
-		// bytesRead = fis.read(buffer, 0, bufferSize);
-		// while (bytesRead > 0) {
-		// dos.write(buffer, 0, bufferSize);
-		// bytesAvailable = fis.available();
-		// bufferSize = Math.min(bytesAvailable, maxBufferSize);
-		// bytesRead = fis.read(buffer, 0, bufferSize);
-		// }
-		// dos.flush();
-		// dos.close();
-		// fis.close();
-		//
-		// } catch (UnknownHostException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// } catch (IOException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
 		byte[] header = new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x00,
 				(byte) 0x14, mMarkerID[0], mMarkerID[1], mMarkerID[2],
 				mMarkerID[3] };
@@ -340,7 +303,7 @@ public class ShowExchangeMenu extends Activity {
 				String filename = Environment.getExternalStorageDirectory()
 						+ File.separator + "DCIM" + File.separator + "Camera"
 						+ File.separator + "IMG001.jpg";
-				
+
 				File f;
 				f = new File(filename);
 				try {
@@ -352,7 +315,9 @@ public class ShowExchangeMenu extends Activity {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://"+ Environment.getExternalStorageDirectory())));
+				sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED,
+						Uri.parse("file://"
+								+ Environment.getExternalStorageDirectory())));
 				Log.d("handle image", "new image saved to: " + filename);
 				break;
 
@@ -362,33 +327,63 @@ public class ShowExchangeMenu extends Activity {
 	};
 
 	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
+	protected void onActivityResult(int requestCode, int resultCode,
+			Intent intent) {
+		super.onActivityResult(requestCode, resultCode, intent);
 
 		switch (requestCode) {
 		case 100:
 			if (resultCode == RESULT_OK) {
-				Uri selectedImage = data.getData();
-				String[] filePathColumn = { MediaStore.Images.Media.DATA };
 
-				Cursor cursor = getContentResolver().query(selectedImage,
-						filePathColumn, null, null, null);
-				cursor.moveToFirst();
+				Uri imageUri = intent.getData();
+				String[] cols = { MediaStore.Images.Media.ORIENTATION,
+						MediaStore.Images.Media.DATA };
+				Cursor cur = managedQuery(imageUri, cols, null, null, null);
+				int orientation = -1;
+				if (cur != null && cur.moveToFirst()) {
+					orientation = cur.getInt(cur.getColumnIndex(cols[0]));
+				}
+				Log.d("orientation", "" + orientation);
+				Matrix matrix = new Matrix();
+				matrix.postRotate(orientation);
 
-				int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-				filePath = cursor.getString(columnIndex);
-				cursor.close();
+				// filePath is necessary to send selected file!
+				filePath = cur.getString(cur.getColumnIndex(cols[1]));
+				cur.close();
 
-				if (yourSelectedImage != null)
-					yourSelectedImage.recycle();
+				ContentResolver cr = getApplicationContext()
+						.getContentResolver();
+				BitmapFactory.Options options = new BitmapFactory.Options();
+				options.inDither = false;
+				options.inPurgeable = true;
+				options.inInputShareable = true;
+				options.inTempStorage = new byte[32 * 1024];
+				// options.inJustDecodeBounds = true; // only get info, no mem
+				// is alloced
+				options.inSampleSize = 4;
 
-				yourSelectedImage = BitmapFactory.decodeFile(filePath);
-				imgView.setImageBitmap(yourSelectedImage);
+				if (bitmap != null) {
+					bitmap.recycle();
+				}
+
+				// bitmap = BitmapFactory.decodeFile(filePath);
+				try {
+					bitmap = BitmapFactory.decodeStream(
+							cr.openInputStream(imageUri), null, options);
+				} catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				// rotate image according to retrieved orientation
+				bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
+						bitmap.getHeight(), matrix, true);
+
+				imgView.setImageBitmap(bitmap);
 
 				findViewById(R.id.sendImage).setVisibility(View.VISIBLE);
 
 			}
 		}
-	}
-
+	} // onActivityResult
 }

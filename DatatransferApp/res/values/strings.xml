@@ -3,11 +3,14 @@
 
     <!-- DatatransferApp -->
     <string name="app_name">DatatransferApp</string>
+    <string name="DTA">DatatransferApp</string>
     <string name="serverLabel">TISCH Server Adresse</string>
     <string name="portLabel">TISCH Server Port</string>
     <string name="buttonConnect">Verbinden</string>
     <string name="serverValue">192.168.102.193</string>
+    <string name="serverHint">provide the IP of the server</string>
     <string name="portValue">8080</string>
+    <string name="portHint">default port is 8080</string>
 
     <!-- TcpClient Service -->
     <string name="tcpServiceStarted">Service started</string>
