@@ -13,6 +13,14 @@
         android:text="@string/DTA"
         android:textSize="20sp" />
 
+    <ImageView
+        android:id="@+id/imageView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:contentDescription="@string/Logo"
+        android:src="@drawable/ic_launcher" />
+
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
@@ -21,10 +29,14 @@
 
     <EditText
         android:id="@+id/ipAddress"
-        android:layout_width="match_parent"
+        android:layout_width="250dp"
         android:layout_height="wrap_content"
+        android:layout_gravity="right"
         android:ems="10"
+        android:gravity="center_vertical|right"
         android:hint="@string/serverHint"
+        android:maxLines="1"
+        android:minLines="1"
         android:singleLine="true"
         android:text="@string/serverValue" >
 
@@ -39,10 +51,14 @@
 
     <EditText
         android:id="@+id/port"
-        android:layout_width="match_parent"
+        android:layout_width="250dp"
         android:layout_height="wrap_content"
+        android:layout_gravity="right"
         android:ems="10"
+        android:gravity="center_vertical|right"
         android:hint="@string/portHint"
+        android:maxLines="1"
+        android:minLines="1"
         android:text="@string/portValue" />
 
     <Button

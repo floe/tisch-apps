@@ -11,6 +11,7 @@
     <string name="serverHint">provide the IP of the server</string>
     <string name="portValue">8080</string>
     <string name="portHint">default port is 8080</string>
+    <string name="Logo">Logo</string>
 
     <!-- TcpClient Service -->
     <string name="tcpServiceStarted">Service started</string>

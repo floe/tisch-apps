@@ -12,8 +12,12 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -135,7 +139,6 @@ public class ShowExchangeMenu extends Activity {
 		TcpClientService.setMainContext(getApplicationContext());
 		Log.d("ShowExchangeMenu", "main Activity is ShowExtendedMenu");
 
-		
 		mMarkerID = getIntent().getByteArrayExtra("markerID");
 		ipTISCH = getIntent().getStringExtra("ipTISCH");
 		portTISCH = getIntent().getIntExtra("portTISCH", 8080);
@@ -187,15 +190,14 @@ public class ShowExchangeMenu extends Activity {
 		outState.putString("filePath", filePath);
 	}
 
-	
 	@Override
 	protected void onDestroy() {
 		Log.d("ShowExchangeMenu", "onDestroy()");
-		if(!connectionClosed)
+		if (!connectionClosed)
 			closeConnection();
 		super.onDestroy();
 	}
-	
+
 	// -----------------------------------------------------------------------
 	// UI Interaction - Display and BackgroundService
 	// -----------------------------------------------------------------------
@@ -303,9 +305,21 @@ public class ShowExchangeMenu extends Activity {
 
 				// you can create a new file name "test.jpg" in sdcard
 				// folder.
+				String imageName = "IMG001_DTA_";
+				SimpleDateFormat formatter = new SimpleDateFormat ("yyyy-MM-dd_HH-mm-ss");
+				Date currentTime = new Date();
+				imageName += formatter.format(currentTime) + ".jpg";
+				
+//				GregorianCalendar now = new GregorianCalendar();
+//				DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
+//				imageName += df.format(now.getTime());
+//				df = DateFormat.getTimeInstance(DateFormat.SHORT);
+//				imageName += df.format(now.getTime());
+//				imageName += "jpg";
+				
 				String filename = Environment.getExternalStorageDirectory()
 						+ File.separator + "DCIM" + File.separator + "Camera"
-						+ File.separator + "IMG001.jpg";
+						+ File.separator + imageName;
 
 				File f;
 				f = new File(filename);

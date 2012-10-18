@@ -12,38 +12,42 @@
         android:padding="10dp"
         android:text="@string/showExchangeMenu"
         android:textSize="20sp" />
-
-    <ImageView
-        android:id="@+id/selectedImage"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_gravity="center"
-        android:contentDescription="@string/selectedImage"
-        android:padding="10dp" />
-
+
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
         android:orientation="horizontal" >
 
-        <Button
-            android:id="@+id/buttonClose"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:text="@string/buttonClose" />
+        <ImageView
+            android:id="@+id/selectedImage"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:contentDescription="@string/selectedImage"
+            android:padding="10dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
 
-        <Button
-            android:id="@+id/selectImage"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:text="@string/selectImage" />
+            <Button
+                android:id="@+id/buttonClose"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:text="@string/buttonClose" />
 
-        <Button
-            android:id="@+id/sendImage"
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:text="@string/sendImage" />
+            <Button
+                android:id="@+id/selectImage"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:text="@string/selectImage" />
+
+            <Button
+                android:id="@+id/sendImage"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:text="@string/sendImage" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>
