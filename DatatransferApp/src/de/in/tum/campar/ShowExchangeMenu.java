@@ -111,6 +111,7 @@ public class ShowExchangeMenu extends Activity {
 	ArrayList<Bitmap> bitmapList;
 	private Bitmap bitmap = null;
 	private String filePath;
+	private boolean connectionClosed = false;
 	public static final String TAG = "ShowExchangeMenu";
 	private ProgressDialog progressDialog;
 
@@ -190,7 +191,8 @@ public class ShowExchangeMenu extends Activity {
 	@Override
 	protected void onDestroy() {
 		Log.d("ShowExchangeMenu", "onDestroy()");
-		closeConnection();
+		if(!connectionClosed)
+			closeConnection();
 		super.onDestroy();
 	}
 	
@@ -252,6 +254,7 @@ public class ShowExchangeMenu extends Activity {
 				mMarkerID[3], };
 		// | contentType = (int) 3 | markerID 4 byte |
 		mTcpClientService.sendMessage(ipTISCH, portTISCH, msg);
+		connectionClosed = true;
 		finish();
 	}
 
