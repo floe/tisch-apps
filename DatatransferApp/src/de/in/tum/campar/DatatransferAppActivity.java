@@ -90,6 +90,8 @@ public class DatatransferAppActivity extends Activity {
 		super.onResume();
 		if (mTcpClientService != null)
 			mTcpClientService.setConnectionHandler(handleConnection);
+		
+		setDisplayOrientation();
 	}
 
 	@Override

@@ -185,6 +185,15 @@ public class ShowExchangeMenu extends Activity {
 	}
 
 	@Override
+	protected void onResume() {
+		Log.d("ShowExchangeMenu", "onResume()");
+		// -> onPause
+		super.onResume();
+		
+		setDisplayOrientation();
+	}
+	
+	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.menu, menu);
