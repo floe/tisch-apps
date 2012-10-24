@@ -23,16 +23,18 @@
             android:id="@+id/imageView1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:contentDescription="@string/Logo"
             android:maxHeight="250dp"
             android:maxWidth="250dp"
-            android:contentDescription="@string/Logo"
             android:src="@drawable/ic_launcher" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="right"
-            android:orientation="vertical" >
+            android:orientation="vertical"
+            android:paddingLeft="50dp" >
 
             <TextView
                 android:id="@+id/textView2"
@@ -47,8 +49,7 @@
                 android:ems="10"
                 android:gravity="center_vertical|right"
                 android:hint="@string/serverHint"
-                android:maxLines="1"
-                android:minLines="1"
+                android:lines="1"
                 android:singleLine="true"
                 android:text="@string/serverValue" >
 
@@ -68,19 +69,35 @@
                 android:ems="10"
                 android:gravity="center_vertical|right"
                 android:hint="@string/portHint"
-                android:maxLines="1"
-                android:minLines="1"
+                android:lines="1"
+                android:singleLine="true"
                 android:text="@string/portValue" />
 
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right" >
+
+                <Button
+                    android:id="@+id/Server1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/Server1" />
+
+                <Button
+                    android:id="@+id/Server2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/Server2" />
+
+                <Button
+                    android:id="@+id/buttonConnect"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/buttonConnect" />
+            </LinearLayout>
+
         </LinearLayout>
-
     </LinearLayout>
-
-    <Button
-        android:id="@+id/buttonConnect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right"
-        android:text="@string/buttonConnect" />
 
 </LinearLayout>

@@ -21,6 +21,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -32,6 +34,8 @@ public class DatatransferAppActivity extends Activity {
 	private ComponentName mStartedService;
 	private TcpClientService mTcpClientService = null;
 	private Bitmap markerImage;
+	private EditText inputIP;
+	private EditText inputPort;
 	public String ipTISCH;
 	public int portTISCH;
 
@@ -69,7 +73,6 @@ public class DatatransferAppActivity extends Activity {
 			}
 		}.start();
 
-		
 	}
 
 	@Override
@@ -77,7 +80,7 @@ public class DatatransferAppActivity extends Activity {
 		Log.d("DatatransferApp", "onStart()");
 		// -> onResume
 		super.onStart();
-		setupButtonsAndListeners();
+		
 	}
 
 	@Override
@@ -85,15 +88,16 @@ public class DatatransferAppActivity extends Activity {
 		Log.d("DatatransferApp", "onResume()");
 		// -> onPause
 		super.onResume();
-		if(mTcpClientService != null)
+		if (mTcpClientService != null)
 			mTcpClientService.setConnectionHandler(handleConnection);
 	}
-	
+
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		setDisplayOrientation();
 	}
-	
+
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
@@ -179,12 +183,22 @@ public class DatatransferAppActivity extends Activity {
 			setContentView(R.layout.main_portrait);
 		else
 			setContentView(R.layout.main_land);
+		
+		setupButtonsAndListeners();
 	}
 
 	private void setupButtonsAndListeners() {
 		Button connect = (Button) findViewById(R.id.buttonConnect);
-
 		connect.setOnClickListener(connectToServer);
+
+		Button server1 = (Button) findViewById(R.id.Server1);
+		server1.setOnClickListener(connectServer1);
+
+		Button server2 = (Button) findViewById(R.id.Server2);
+		server2.setOnClickListener(connectServer2);
+
+		inputIP = (EditText) findViewById(R.id.ipAddress);
+		inputPort = (EditText) findViewById(R.id.port);
 	}
 
 	private void activateService() {
@@ -289,7 +303,7 @@ public class DatatransferAppActivity extends Activity {
 		}
 
 	}
-	
+
 	public Handler handleConnection = new Handler() {
 
 		@Override
@@ -303,13 +317,18 @@ public class DatatransferAppActivity extends Activity {
 			switch (msg.what) {
 			case 0: // response contains markerID
 				// show marker
+				InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+
+				mgr.hideSoftInputFromWindow(inputIP.getWindowToken(), 0);
+				mgr.hideSoftInputFromWindow(inputPort.getWindowToken(), 0);
+
 				setContentView(R.layout.show_marker);
 				ImageView image = (ImageView) findViewById(R.id.showMarker);
 				// markerID[0], markerID[1] should be 0 since marker consists
 				// only of 16bit
 				createMarkerImage(new byte[] { markerID[2], markerID[3] });
 				image.setImageBitmap(markerImage);
-				
+
 				break;
 
 			case 1: // marker was found
@@ -318,7 +337,7 @@ public class DatatransferAppActivity extends Activity {
 				intent.putExtra("markerID", markerID);
 				intent.putExtra("ipTISCH", ipTISCH);
 				intent.putExtra("portTISCH", portTISCH);
-				
+
 				// switch to Gallery
 				startActivity(intent);
 				break;
@@ -330,30 +349,45 @@ public class DatatransferAppActivity extends Activity {
 		}
 
 	};
+	
 
 	private OnClickListener connectToServer = new OnClickListener() {
-
 		public void onClick(View v) {
-			EditText inputIP = (EditText) findViewById(R.id.ipAddress);
 			ipTISCH = inputIP.getText().toString();
-
-			EditText inputPort = (EditText) findViewById(R.id.port);
 			portTISCH = Integer.parseInt(inputPort.getText().toString());
-
-			Log.d("connectToServer", "ip: " + ipTISCH);
-			Log.d("connectToServer", "port: " + portTISCH);
-
-			if (mTcpClientService == null)
-				Log.d("connectToServer", "mTcpClientService null");
-
-			// requestMarkerID
-			byte[] msg = new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x00,
-					(byte) 0x00 };
-			// | contentType = (int) 0 |
-			mTcpClientService.sendMessage(ipTISCH, portTISCH, msg);
-
+			connect(ipTISCH, portTISCH);
 		}
-
 	};
 
+	private OnClickListener connectServer1 = new OnClickListener() {
+		public void onClick(View v) {
+			ipTISCH = "192.168.102.196";
+			portTISCH = 8080;
+			connect(ipTISCH, portTISCH);
+		}
+	};
+
+	private OnClickListener connectServer2 = new OnClickListener() {
+		public void onClick(View v) {
+			ipTISCH = "192.168.102.174";
+			portTISCH = 8080;
+			connect(ipTISCH, portTISCH);
+		}
+	};
+
+	private void connect(String ip, int port) {
+
+		Log.d("connectToServer", "ip: " + ipTISCH);
+		Log.d("connectToServer", "port: " + portTISCH);
+
+		if (mTcpClientService == null)
+			Log.d("connectToServer", "mTcpClientService null");
+
+		// requestMarkerID
+		byte[] msg = new byte[] { (byte) 0x00, (byte) 0x00, (byte) 0x00,
+				(byte) 0x00 };
+		// | contentType = (int) 0 |
+		mTcpClientService.sendMessage(ipTISCH, portTISCH, msg);
+
+	}
 }

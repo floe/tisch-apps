@@ -115,6 +115,10 @@ public class ShowExchangeMenu extends Activity {
 	ArrayList<Bitmap> bitmapList;
 	private Bitmap bitmap = null;
 	private String filePath;
+	private Matrix matrix;
+	private ContentResolver cr;
+	private BitmapFactory.Options options;
+	private Uri imageUri;
 	private boolean connectionClosed = false;
 	public static final String TAG = "ShowExchangeMenu";
 	private ProgressDialog progressDialog;
@@ -126,6 +130,7 @@ public class ShowExchangeMenu extends Activity {
 		super.onCreate(savedInstanceState);
 		if (savedInstanceState != null) {
 			this.filePath = savedInstanceState.getString("filePath");
+			this.imageUri = Uri.parse(savedInstanceState.getString("imageUri"));
 		}
 
 		setContentView(R.layout.showexchangemenu_port);
@@ -133,7 +138,6 @@ public class ShowExchangeMenu extends Activity {
 		Log.d("ShowExchangeMenu", "show exchange menu");
 
 		setDisplayOrientation();
-		setupButtonsAndListeners();
 
 		TcpClientService.setMainActivity(this);
 		TcpClientService.setMainContext(getApplicationContext());
@@ -147,7 +151,15 @@ public class ShowExchangeMenu extends Activity {
 		Log.d("ShowExchangeMenu", "update connection handler");
 		mTcpClientService.setConnectionHandler(handleConnection);
 
-		imgView = (ImageView) findViewById(R.id.selectedImage);
+		cr = getApplicationContext().getContentResolver();
+		options = new BitmapFactory.Options();
+		options.inDither = false;
+		options.inPurgeable = true;
+		options.inInputShareable = true;
+		options.inTempStorage = new byte[32 * 1024];
+		// options.inJustDecodeBounds = true; // only get info, no mem
+		// is alloced
+		options.inSampleSize = 4;
 	}
 
 	@Override
@@ -182,12 +194,15 @@ public class ShowExchangeMenu extends Activity {
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		setDisplayOrientation();
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putString("filePath", filePath);
+		if(imageUri != null)
+			outState.putString("imageUri", imageUri.toString());
 	}
 
 	@Override
@@ -208,7 +223,21 @@ public class ShowExchangeMenu extends Activity {
 		} else {
 			setContentView(R.layout.showexchangemenu_land);
 		}
+		imgView = (ImageView) findViewById(R.id.selectedImage);
+		setupButtonsAndListeners();
 
+		if (bitmap != null && imageUri != null) {
+
+			try {
+				bitmap = BitmapFactory.decodeStream(
+						cr.openInputStream(imageUri), null, options);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			displaySelectedImage();
+		}
 	}
 
 	private void setupButtonsAndListeners() {
@@ -306,17 +335,19 @@ public class ShowExchangeMenu extends Activity {
 				// you can create a new file name "test.jpg" in sdcard
 				// folder.
 				String imageName = "IMG001_DTA_";
-				SimpleDateFormat formatter = new SimpleDateFormat ("yyyy-MM-dd_HH-mm-ss");
+				SimpleDateFormat formatter = new SimpleDateFormat(
+						"yyyy-MM-dd_HH-mm-ss");
 				Date currentTime = new Date();
 				imageName += formatter.format(currentTime) + ".jpg";
-				
-//				GregorianCalendar now = new GregorianCalendar();
-//				DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
-//				imageName += df.format(now.getTime());
-//				df = DateFormat.getTimeInstance(DateFormat.SHORT);
-//				imageName += df.format(now.getTime());
-//				imageName += "jpg";
-				
+
+				// GregorianCalendar now = new GregorianCalendar();
+				// DateFormat df =
+				// DateFormat.getDateInstance(DateFormat.MEDIUM);
+				// imageName += df.format(now.getTime());
+				// df = DateFormat.getTimeInstance(DateFormat.SHORT);
+				// imageName += df.format(now.getTime());
+				// imageName += "jpg";
+
 				String filename = Environment.getExternalStorageDirectory()
 						+ File.separator + "DCIM" + File.separator + "Camera"
 						+ File.separator + imageName;
@@ -352,7 +383,7 @@ public class ShowExchangeMenu extends Activity {
 		case 100:
 			if (resultCode == RESULT_OK) {
 
-				Uri imageUri = intent.getData();
+				imageUri = intent.getData();
 				String[] cols = { MediaStore.Images.Media.ORIENTATION,
 						MediaStore.Images.Media.DATA };
 				Cursor cur = managedQuery(imageUri, cols, null, null, null);
@@ -361,46 +392,39 @@ public class ShowExchangeMenu extends Activity {
 					orientation = cur.getInt(cur.getColumnIndex(cols[0]));
 				}
 				Log.d("orientation", "" + orientation);
-				Matrix matrix = new Matrix();
+				matrix = new Matrix();
 				matrix.postRotate(orientation);
 
 				// filePath is necessary to send selected file!
 				filePath = cur.getString(cur.getColumnIndex(cols[1]));
 				cur.close();
 
-				ContentResolver cr = getApplicationContext()
-						.getContentResolver();
-				BitmapFactory.Options options = new BitmapFactory.Options();
-				options.inDither = false;
-				options.inPurgeable = true;
-				options.inInputShareable = true;
-				options.inTempStorage = new byte[32 * 1024];
-				// options.inJustDecodeBounds = true; // only get info, no mem
-				// is alloced
-				options.inSampleSize = 4;
-
-				if (bitmap != null) {
-					bitmap.recycle();
-				}
-
-				// bitmap = BitmapFactory.decodeFile(filePath);
-				try {
-					bitmap = BitmapFactory.decodeStream(
-							cr.openInputStream(imageUri), null, options);
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-				// rotate image according to retrieved orientation
-				bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
-						bitmap.getHeight(), matrix, true);
-
-				imgView.setImageBitmap(bitmap);
-
-				findViewById(R.id.sendImage).setVisibility(View.VISIBLE);
+				displaySelectedImage();
 
 			}
 		}
 	} // onActivityResult
+
+	private void displaySelectedImage() {
+		if (bitmap != null) {
+			bitmap.recycle();
+		}
+
+		// bitmap = BitmapFactory.decodeFile(filePath);
+		try {
+			bitmap = BitmapFactory.decodeStream(cr.openInputStream(imageUri),
+					null, options);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		// rotate image according to retrieved orientation
+		bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
+				bitmap.getHeight(), matrix, true);
+
+		imgView.setImageBitmap(bitmap);
+
+		findViewById(R.id.sendImage).setVisibility(View.VISIBLE);
+	}
 }
