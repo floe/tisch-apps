@@ -277,10 +277,11 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 				// deactivate and reset connection info
 				markers[mMarkerID].active = false;
 				markers[mMarkerID].connectInfoMobile = zero_sockaddr_in;
-
 				// notify all images belong to this HDZ that it leaves
 				std::vector<MyImage*> notityImgs = markers[mMarkerID].hdz->imageVector;
+				cout << "notifyImgs: " << notityImgs.size() << endl;
 				for (int i = 0; i < notityImgs.size(); i++) {
+					cout << "i: " << i << " mID: " << mMarkerID << endl;
 					notityImgs.at(i)->removeHDZ(mMarkerID);
 				}
 				
@@ -350,9 +351,23 @@ void TcpRequestThread::TcpRequestThreadEntryPoint() {
 				}
 			}
 			
+			int newImageWidth = 0;
+			int newImageHeight = 0;
+			if (cinfo.image_height > cinfo.image_width) {
+				// portrait
+				newImageWidth = 150;
+				newImageHeight = 200;
+			}
+			else {
+				// landscape
+				newImageWidth = 200;
+				newImageHeight = 150;
+			}
+
+
 			MyImage* my_img = new MyImage(
-				200,
-				150,
+				newImageWidth,
+				newImageHeight,
 				markers[mMarkerID].hdz->x,
 				markers[mMarkerID].hdz->y < 0 ? markers[mMarkerID].hdz->y + markers[mMarkerID].hdz->h : markers[mMarkerID].hdz->y - markers[mMarkerID].hdz->h,
 				0,
