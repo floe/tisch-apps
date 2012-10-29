@@ -4,10 +4,13 @@
     android:versionCode="1"
     android:versionName="1.0" >
 
-    <uses-sdk android:minSdkVersion="8" android:maxSdkVersion="16" android:targetSdkVersion="10"/>
+    <uses-sdk
+        android:maxSdkVersion="16"
+        android:minSdkVersion="8"
+        android:targetSdkVersion="10" />
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -19,9 +22,9 @@
 
         <activity
             android:name=".DatatransferAppActivity"
+            android:configChanges="orientation|keyboardHidden"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
-            android:configChanges="orientation|keyboardHidden" >
+            android:launchMode="singleTop" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -30,9 +33,9 @@
         </activity>
         <activity
             android:name="ShowExchangeMenu"
+            android:configChanges="orientation|keyboardHidden"
             android:label="@string/showExchangeMenu"
-            android:launchMode="singleTop"
-            android:configChanges="orientation|keyboardHidden" >
+            android:launchMode="singleTop" >
         </activity>
     </application>
 

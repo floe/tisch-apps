@@ -7,12 +7,12 @@
     <string name="serverLabel">TISCH Server Address</string>
     <string name="portLabel">TISCH Server Port</string>
     <string name="buttonConnect">Connect</string>
-    <string name="serverValue">192.168.102.198</string>
+    <string name="serverValue">192.168.102.193</string>
     <string name="serverHint">server IP</string>
     <string name="portValue">8080</string>
     <string name="portHint">default port is 8080</string>
     <string name="Logo">Logo</string>
-    <string name="Server1">102.196</string>
+    <string name="Server1">102.193</string>
     <string name="Server2">102.174</string>
 
     <!-- TcpClient Service -->

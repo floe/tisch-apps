@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -80,7 +81,7 @@ public class DatatransferAppActivity extends Activity {
 		Log.d("DatatransferApp", "onStart()");
 		// -> onResume
 		super.onStart();
-		
+
 	}
 
 	@Override
@@ -90,7 +91,7 @@ public class DatatransferAppActivity extends Activity {
 		super.onResume();
 		if (mTcpClientService != null)
 			mTcpClientService.setConnectionHandler(handleConnection);
-		
+
 		setDisplayOrientation();
 	}
 
@@ -185,7 +186,7 @@ public class DatatransferAppActivity extends Activity {
 			setContentView(R.layout.main_portrait);
 		else
 			setContentView(R.layout.main_land);
-		
+
 		setupButtonsAndListeners();
 	}
 
@@ -318,11 +319,15 @@ public class DatatransferAppActivity extends Activity {
 
 			switch (msg.what) {
 			case 0: // response contains markerID
+
 				// show marker
 				InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
 				mgr.hideSoftInputFromWindow(inputIP.getWindowToken(), 0);
 				mgr.hideSoftInputFromWindow(inputPort.getWindowToken(), 0);
+
+				mMainActivity
+						.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
 				setContentView(R.layout.show_marker);
 				ImageView image = (ImageView) findViewById(R.id.showMarker);
@@ -351,7 +356,6 @@ public class DatatransferAppActivity extends Activity {
 		}
 
 	};
-	
 
 	private OnClickListener connectToServer = new OnClickListener() {
 		public void onClick(View v) {
@@ -363,7 +367,7 @@ public class DatatransferAppActivity extends Activity {
 
 	private OnClickListener connectServer1 = new OnClickListener() {
 		public void onClick(View v) {
-			ipTISCH = "192.168.102.196";
+			ipTISCH = "192.168.102.193";
 			portTISCH = 8080;
 			connect(ipTISCH, portTISCH);
 		}
