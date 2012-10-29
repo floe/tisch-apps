@@ -4,9 +4,9 @@
     <!-- DatatransferApp -->
     <string name="app_name">DatatransferApp</string>
     <string name="DTA">DatatransferApp</string>
-    <string name="serverLabel">TISCH Server Adresse</string>
+    <string name="serverLabel">TISCH Server Address</string>
     <string name="portLabel">TISCH Server Port</string>
-    <string name="buttonConnect">Verbinden</string>
+    <string name="buttonConnect">Connect</string>
     <string name="serverValue">192.168.102.198</string>
     <string name="serverHint">server IP</string>
     <string name="portValue">8080</string>
@@ -25,8 +25,8 @@
     <!-- ShowExchangeMenu -->
     <string name="showExchangeMenu">Exchange Menu</string>
     <string name="imgContentDescription">Bild</string>
-    <string name="selectImage">select Image</string>
-    <string name="sendImage">send Image</string>
+    <string name="selectImage">Select Image</string>
+    <string name="sendImage">Send Image</string>
     <string name="selectedImage">your image</string>
     <string name="buttonClose">Quit</string>
 
