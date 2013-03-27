@@ -131,6 +131,7 @@ int main(int argc, char* argv[]) {
   glutMouseFunc(mouse);
   glutIdleFunc(idle);
 
+	ksrc->setHiRes(true);
 	ksrc->start();
 	win->run();
 
