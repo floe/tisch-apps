@@ -4,6 +4,8 @@
 *   Licensed under GNU Lesser General Public License (LGPL) 3 or later    *
 \*************************************************************************/
 
+#include <stdio.h>
+
 #include <KinectImageSource.h>
 #include <GLUTWindow.h>
 #include <Blob.h>
@@ -114,6 +116,7 @@ void display() {
 
 	int xoff = 0, yoff = 5;
 
+	glTranslatef(0,0,100);
 	// for each remaining blob:
 	for (std::vector<Blob>::iterator blob = blobs.begin(); blob != blobs.end(); blob++) {
 
@@ -161,9 +164,13 @@ void display() {
 		} catch (...) { }
 
 		// if count in [1,6] -> würfel
-		if ((eyes.size() > 0) && (eyes.size() < 7))
-			std::cout << "eyes: " << eyes.size() << std::endl;
+		if ((eyes.size() > 0) && (eyes.size() < 7)) {
+			char textbuf[1024]; snprintf(textbuf,1024,"%d",eyes.size());
+			glColor3f(1,0,0);
+			win->print(textbuf,cx,cy);
+		}
 	}
+	glTranslatef(0,0,-100);
 
 	/*masked.clear();
 
