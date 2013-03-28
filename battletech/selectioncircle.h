@@ -8,7 +8,7 @@ mail: dippona@in.tum.de
 #define SELECTIONCIRCLE_H
 
 #include <tisch.h>
-#include <widgets/Tile.h>
+#include <Tile.h>
 #include <Texture.h>
 #include "textures.h"
 

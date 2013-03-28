@@ -8,7 +8,7 @@ mail: dippona@in.tum.de
 #define GAMETILE_H
 
 #include <tisch.h>
-#include <widgets/Container.h>
+#include <Container.h>
 #include <Texture.h>
 #include "textures.h"
 #include "unit.h"

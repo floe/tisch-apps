@@ -8,8 +8,8 @@ mail: dippona@in.tum.de
 #define UNITDATACONTAINER_H
 
 #include <tisch.h>
-#include <widgets/Container.h>
-#include <widgets/Label.h>
+#include <Container.h>
+#include <Label.h>
 #include "textures.h"
 #include "unit.h"
 

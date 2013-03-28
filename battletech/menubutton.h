@@ -8,7 +8,7 @@ mail: dippona@in.tum.de
 #define MENUBUTTON_H
 
 #include <tisch.h>
-#include <widgets/Button.h>
+#include <Button.h>
 #include "engine.h"
 
 class menubutton : public Button

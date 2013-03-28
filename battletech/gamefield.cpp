@@ -622,6 +622,6 @@ void gamefield::startNewGame()
 
 void gamefield::refresh()
 {
-	((MasterContainer*)this->parent)->signOff();
+	//((MasterContainer*)this->parent)->signOff();
 	update();
 }

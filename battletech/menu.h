@@ -8,12 +8,12 @@ mail: dippona@in.tum.de
 #define MENU_H
 
 #include <tisch.h>
-#include <widgets/Container.h>
-#include <widgets/Checkbox.h>
-#include <widgets/Textbox.h>
-#include <widgets/Dial.h>
-#include <widgets/Slider.h>
-#include <widgets/Label.h>
+#include <Container.h>
+#include <Checkbox.h>
+#include <Textbox.h>
+#include <Dial.h>
+#include <Slider.h>
+#include <Label.h>
 #include "menubutton.h"
 #include "textures.h"
 #include "engine.h"

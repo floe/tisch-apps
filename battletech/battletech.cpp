@@ -11,7 +11,7 @@ mail: dippona@in.tum.de
 #include "mainMenu.h"
 #include "unitSelectionMenu.h"
 #include "player.h"
-#include <widgets/Window.h>
+#include <Window.h>
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>

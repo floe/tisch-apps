@@ -8,7 +8,7 @@ mail: dippona@in.tum.de
 #define GAMEFIELD_H
 
 #include <tisch.h>
-#include <widgets/Container.h>
+#include <Container.h>
 #include "gametile.h"
 #include "selectioncircle.h"
 
