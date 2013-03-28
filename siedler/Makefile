@@ -1,4 +1,4 @@
-LDFLAGS=-lglut -ltools -loscpack -lsimplecv -lsimplegl -lwidgets -lgestures -L ../../libtisch-3.0/build/lib/
+LDFLAGS=-lglut -loscpack -lsimplecv -ltools -lsimplegl -lwidgets -lgispl -L ../../libtisch-3.0/build/lib/
 
 all: siedler dice
 
@@ -12,4 +12,4 @@ dice: dice.o
 	g++ -DTISCH_SHARED="" -DTISCH_PREFIX="" -c -ggdb -Wall -o $@ $< -I ../../libtisch-3.0/build/include/libtisch/
 
 clean:
-	-rm *.o graphedit 
+	-rm *.o siedler dice

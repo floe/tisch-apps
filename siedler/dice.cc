@@ -6,6 +6,7 @@
 
 #include <KinectImageSource.h>
 #include <GLUTWindow.h>
+#include <Blob.h>
 
 KinectImageSource* ksrc = 0;
 GLUTWindow* win = 0;
@@ -19,7 +20,11 @@ ShortImage thre(640,480);
 ShortImage desp(640,480);
 ShortImage bg(640,480);
 
+IntensityImage mask(640,480);
+
 Image* disp = &rgb;
+
+std::vector<Blob> blobs;
 
 int thr = 150;
 
@@ -81,14 +86,78 @@ void display() {
 	bg.subtract( depth, diff, 0 );
 	diff.threshold(thr,thre,3000);
 	thre.despeckle(desp,4);
-
-	masked.clear();
+	desp.convert( mask );
 
 	unsigned char* rgbdata = rgb.getData();
-	unsigned char* maskdata = masked.getData();
-	unsigned short* depthdata = (unsigned short*)desp.getData();
+	unsigned char* maskdata = mask.getData();
+
+	unsigned char value = 254;
+	int gid = 1;
+
+	blobs.clear();
+
+	for (int i = 0; i < 640*480; i++) if (maskdata[i] == 255) try {
+
+		// try to create a new blob. throws if blob too small, continues silently.
+		blobs.push_back( Blob( &mask, Point(i%640,i/640), value, gid, 1500, 3000) );
+
+		// adjust counters
+		value--;
+		gid++;
+
+		// did the frame-local blob counter overflow?
+		if (value == 0) {
+			value = 254;
+			std::cerr << "Warning: too many blobs!" << std::endl;
+		}
+
+	} catch (...) { }
 
 	int xoff = 0, yoff = 5;
+
+	// for each remaining blob:
+	for (std::vector<Blob>::iterator blob = blobs.begin(); blob != blobs.end(); blob++) {
+
+		// create IntensityImage(50,50)
+		IntensityImage diceimg(50,50);
+		unsigned char* dicedata = diceimg.getData();
+
+		// copy pixels from rgbdata at adjusted blob position
+		int cx = blob->pos.x * 2 + xoff;
+		int cy = blob->pos.y * 2 + yoff;
+
+		for (int y = 0; y < 50; y++) for (int x = 0; x < 50; x++) {
+			int sx = cx - 25 + x;
+			int sy = cy - 25 + y;
+			int i = (sy*1280+sx)*3;
+			int res = rgbdata[i] + rgbdata[i+1] + rgbdata[i+2];
+			dicedata[y*50+x] = res/3;
+		}
+
+		win->show( diceimg, cx-25, cy-25 );
+
+		// get avg. intensity
+		diceimg.invert();
+		int intensity = diceimg.intensity();
+
+		// invert, apply as threshold
+		diceimg.threshold(intensity);
+
+		std::vector<Blob> eyes;
+		unsigned char eyeval = 254;
+		int eyegid = 1;
+
+		// find blobs ~ 50 px
+		for (int i = 0; i < 50*50; i++) if (dicedata[i] == 255) try {
+			eyes.push_back( Blob( &diceimg, Point(i%50,i/50), eyeval, eyegid, 30, 70) );
+			value--; gid++;
+		} catch (...) { }
+
+		// if count in [1,6] -> würfel
+		std::cout << "eyes: " << eyes.size() << std::endl;
+	}
+
+	/*masked.clear();
 
 	for (int y = 0; y < 960; y++)
 	for (int x = 0; x < 1280; x++) {
@@ -98,7 +167,7 @@ void display() {
 		maskdata[i*3+0] = rgbdata[i*3+0];
 		maskdata[i*3+1] = rgbdata[i*3+1];
 		maskdata[i*3+2] = rgbdata[i*3+2];
-	}
+	}*/
 
 	if (disp == &rgb || disp == &masked) win->show( *(RGBImage*)disp,0,0 );
   else win->show( *(ShortImage*)disp, 0, 0 );
