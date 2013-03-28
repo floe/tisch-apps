@@ -12,7 +12,6 @@ KinectImageSource* ksrc = 0;
 GLUTWindow* win = 0;
 
 RGBImage rgb(1280,1024);
-RGBImage masked(1280,1024);
 
 ShortImage depth(640,480);
 ShortImage diff(640,480);
@@ -46,8 +45,8 @@ void key(unsigned char code, int, int) {
 	if (code == '2') disp = &depth;
 	if (code == '3') disp = &bg;
 	if (code == '4') disp = &thre;
-	if (code == '4') disp = &desp;
-	if (code == '6') disp = &masked;
+	if (code == '5') disp = &desp;
+	if (code == '6') disp = &mask;
 
 	if (code == '-') thr--;
 	if (code == '+') thr++;
@@ -132,9 +131,10 @@ void display() {
 			int i = (sy*1280+sx)*3;
 			int res = rgbdata[i] + rgbdata[i+1] + rgbdata[i+2];
 			dicedata[y*50+x] = res/3;
+			rgbdata[i] = rgbdata[i+1] = rgbdata[i+2] = res/3;
 		}
 
-		win->show( diceimg, cx-25, cy-25 );
+		//win->show( diceimg, cx-25, cy-25 );
 
 		// get avg. intensity
 		diceimg.invert();
@@ -142,6 +142,13 @@ void display() {
 
 		// invert, apply as threshold
 		diceimg.threshold(intensity);
+
+		for (int y = 0; y < 50; y++) for (int x = 0; x < 50; x++) {
+			int sx = cx - 25 + x;
+			int sy = cy - 25 + y;
+			int i = (sy*1280+sx)*3;
+			rgbdata[i] = rgbdata[i+1] = rgbdata[i+2] = dicedata[y*50+x];
+		}
 
 		std::vector<Blob> eyes;
 		unsigned char eyeval = 254;
@@ -154,7 +161,8 @@ void display() {
 		} catch (...) { }
 
 		// if count in [1,6] -> würfel
-		std::cout << "eyes: " << eyes.size() << std::endl;
+		if ((eyes.size() > 0) && (eyes.size() < 7))
+			std::cout << "eyes: " << eyes.size() << std::endl;
 	}
 
 	/*masked.clear();
@@ -169,7 +177,8 @@ void display() {
 		maskdata[i*3+2] = rgbdata[i*3+2];
 	}*/
 
-	if (disp == &rgb || disp == &masked) win->show( *(RGBImage*)disp,0,0 );
+	if (disp == &rgb) win->show( *(RGBImage*)disp,0,0 );
+  else if (disp == &mask) win->show( *(IntensityImage*)disp, 0, 0 );
   else win->show( *(ShortImage*)disp, 0, 0 );
 
 	/*glMatrixMode( GL_MODELVIEW );
