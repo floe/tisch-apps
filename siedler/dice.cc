@@ -65,6 +65,7 @@ void idle() {
 	ksrc->getImage( depth );
 	ksrc->release();
 	glutPostRedisplay();
+	if (curframe++ == 10) bg = depth;
 }
 
 void display() {
@@ -100,7 +101,7 @@ void display() {
 	for (int i = 0; i < 640*480; i++) if (maskdata[i] == 255) try {
 
 		// try to create a new blob. throws if blob too small, continues silently.
-		blobs.push_back( Blob( &mask, Point(i%640,i/640), value, gid, 1500, 3000) );
+		blobs.push_back( Blob( &mask, Point(i%640,i/640), value, gid, 300, 700) );
 
 		// adjust counters
 		value--;
@@ -114,7 +115,7 @@ void display() {
 
 	} catch (...) { }
 
-	int xoff = 0, yoff = 5;
+	int xoff = 0, yoff = 0;
 
 	glTranslatef(0,0,100);
 	// for each remaining blob:
@@ -144,7 +145,7 @@ void display() {
 		int intensity = diceimg.intensity();
 
 		// invert, apply as threshold
-		diceimg.threshold(intensity);
+		diceimg.threshold(150);
 
 		for (int y = 0; y < 50; y++) for (int x = 0; x < 50; x++) {
 			int sx = cx - 25 + x;
@@ -159,7 +160,7 @@ void display() {
 
 		// find blobs ~ 50 px
 		for (int i = 0; i < 50*50; i++) if (dicedata[i] == 255) try {
-			eyes.push_back( Blob( &diceimg, Point(i%50,i/50), eyeval, eyegid, 30, 70) );
+			eyes.push_back( Blob( &diceimg, Point(i%50,i/50), eyeval, eyegid, 20, 40) );
 			value--; gid++;
 		} catch (...) { }
 
