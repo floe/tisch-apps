@@ -27,6 +27,8 @@ class SlideContainer: public Container {
 			texture(NULL);
 		}
 
+		void tap( Vector pos, int id ) { }
+
 		void draw() {
 			for (std::deque<Widget*>::iterator it = widgets.begin(); it != widgets.end(); it++) {
 				(*it)->setangle(g_angle);
@@ -85,7 +87,10 @@ int main( int argc, char* argv[] ) {
 		currpos += it->second+100;
 	}
 
+	Label* blank = new Label( "", 400,400, -200,0, 0, 0, 0, new RGBATexture( "empty.png" ) );
+
 	win->add( cont );
+	win->add( blank );
 	win->update();
 	win->run();
 }
