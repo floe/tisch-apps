@@ -9,4 +9,4 @@ sleep 10
 ./calibd & disown
 
 cd ../../../applets/weather
-./weather weather?.png
+./weather weather2.png weather3.png weather1.png 

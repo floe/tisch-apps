@@ -87,7 +87,7 @@ int main( int argc, char* argv[] ) {
 		currpos += it->second+100;
 	}
 
-	Label* blank = new Label( "", 400,400, -200,0, 0, 0, 0, new RGBATexture( "empty.png" ) );
+	Label* blank = new Label( "", 600,400, -200,0, 0, 0, 0, new RGBATexture( "empty.png" ) );
 
 	win->add( cont );
 	win->add( blank );
