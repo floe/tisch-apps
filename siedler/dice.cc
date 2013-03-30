@@ -5,9 +5,11 @@
 \*************************************************************************/
 
 #include <stdio.h>
+#include <deque>
 
 #include <KinectImageSource.h>
 #include <GLUTWindow.h>
+#include <Texture.h>
 #include <Blob.h>
 
 KinectImageSource* ksrc = 0;
@@ -20,6 +22,10 @@ ShortImage diff(640,480);
 ShortImage thre(640,480);
 ShortImage desp(640,480);
 ShortImage bg(640,480);
+
+RGBATexture* numbers[13];
+RGBATexture* number = NULL;
+std::deque<int> rolls;
 
 bool shownum = false;
 
@@ -122,7 +128,7 @@ void display() {
 
 	} catch (...) { }
 
-	int xoff = 0, yoff = 0;
+	int xoff = 0, yoff = 0, sum = 0;
 
 	glTranslatef(0,0,100);
 	// for each remaining blob:
@@ -175,13 +181,34 @@ void display() {
 		} catch (...) { }
 
 		// if count in [1,6] -> würfel
-		if (shownum) if ((eyes.size() > 0) && (eyes.size() < 7)) {
+		if ((eyes.size() > 0) && (eyes.size() < 7)) {
 			char textbuf[1024]; snprintf(textbuf,1024,"%d",eyes.size());
 			glColor3f(1,0,0);
-			win->print(textbuf,cx*800/1280,cy*600/1024);
+			if (shownum) win->print(textbuf,cx*800/1280,cy*600/1024);
+			sum += eyes.size();
 		}
 	}
 	glTranslatef(0,0,-100);
+
+	// check if same sum for last 10 frames
+	rolls.push_back(sum);
+	if (rolls.size() > 10) rolls.pop_front();
+
+	int firstsum = rolls[0];
+	if (rolls.size() == 10)
+		for (int i = 1; i < 10; i++)
+			if (rolls[i] != firstsum) firstsum = -1; 
+
+	if ((firstsum >= 2) && (firstsum <= 12))
+		number = numbers[firstsum];
+	else
+		number = NULL;
+
+	if (number) {
+		number->bind();
+		number->render();
+		number->release();
+	}
 
 	/*masked.clear();
 
@@ -221,6 +248,12 @@ int main(int argc, char* argv[]) {
 
 	ksrc = new KinectImageSource();
 	win = new GLUTWindow(800,600,"gldemo");
+
+	for (int i = 2; i <= 12; i++) {
+		char namebuf[100];
+		snprintf(namebuf,100,"siedler%02d.png",i);
+		numbers[i] = new RGBATexture(namebuf);
+	}
 
 	glutDisplayFunc( display );
   glutKeyboardFunc(key);
