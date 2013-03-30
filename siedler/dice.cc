@@ -21,13 +21,15 @@ ShortImage thre(640,480);
 ShortImage desp(640,480);
 ShortImage bg(640,480);
 
+bool shownum = false;
+
 IntensityImage mask(640,480);
 
 Image* disp = &rgb;
 
 std::vector<Blob> blobs;
 
-int thr = 150;
+int thr = 180;
 
 int curframe = 0;
 int lasttime = 0;
@@ -49,11 +51,14 @@ void key(unsigned char code, int, int) {
 	if (code == '4') disp = &thre;
 	if (code == '5') disp = &desp;
 	if (code == '6') disp = &mask;
+	if (code == '7') disp = NULL;
 
 	if (code == '-') thr--;
 	if (code == '+') thr++;
 
 	if (code == ' ') bg = depth;
+	if (code == 'f') glutFullScreen();
+	if (code == 'n') shownum = !shownum;
 
 	std::cout << (int)thr << " " << std::endl;
 	glutPostRedisplay();
@@ -86,7 +91,7 @@ void display() {
 	dsp.sobel(sbl);
 	sbl.houghLine( buf );*/
 	bg.subtract( depth, diff, 0 );
-	diff.threshold(thr,thre,3000);
+	diff.threshold(150,thre,3000);
 	thre.despeckle(desp,4);
 	desp.convert( mask );
 
@@ -97,6 +102,8 @@ void display() {
 	int gid = 1;
 
 	blobs.clear();
+
+	if (!disp && !shownum) win->show( rgb,0,0 );
 
 	for (int i = 0; i < 640*480; i++) if (maskdata[i] == 255) try {
 
@@ -142,10 +149,13 @@ void display() {
 
 		// get avg. intensity
 		diceimg.invert();
-		int intensity = diceimg.intensity();
+		diceimg.threshold(thr);
+		IntensityImage tmp(50,50);
+		diceimg.despeckle(tmp,7);
+		diceimg = tmp;
+		//int intensity = diceimg.intensity();
 
 		// invert, apply as threshold
-		diceimg.threshold(150);
 
 		for (int y = 0; y < 50; y++) for (int x = 0; x < 50; x++) {
 			int sx = cx - 25 + x;
@@ -160,15 +170,15 @@ void display() {
 
 		// find blobs ~ 50 px
 		for (int i = 0; i < 50*50; i++) if (dicedata[i] == 255) try {
-			eyes.push_back( Blob( &diceimg, Point(i%50,i/50), eyeval, eyegid, 20, 40) );
+			eyes.push_back( Blob( &diceimg, Point(i%50,i/50), eyeval, eyegid, 10, 30) );
 			value--; gid++;
 		} catch (...) { }
 
 		// if count in [1,6] -> würfel
-		if ((eyes.size() > 0) && (eyes.size() < 7)) {
+		if (shownum) if ((eyes.size() > 0) && (eyes.size() < 7)) {
 			char textbuf[1024]; snprintf(textbuf,1024,"%d",eyes.size());
 			glColor3f(1,0,0);
-			win->print(textbuf,cx,cy);
+			win->print(textbuf,cx*800/1280,cy*600/1024);
 		}
 	}
 	glTranslatef(0,0,-100);
@@ -185,9 +195,9 @@ void display() {
 		maskdata[i*3+2] = rgbdata[i*3+2];
 	}*/
 
-	if (disp == &rgb) win->show( *(RGBImage*)disp,0,0 );
+	if (disp)  { if (disp == &rgb) win->show( *(RGBImage*)disp,0,0 );
   else if (disp == &mask) win->show( *(IntensityImage*)disp, 0, 0 );
-  else win->show( *(ShortImage*)disp, 0, 0 );
+  else win->show( *(ShortImage*)disp, 0, 0 ); }
 
 	/*glMatrixMode( GL_MODELVIEW );
 	glColor3f(1,0,0);
@@ -210,7 +220,7 @@ void display() {
 int main(int argc, char* argv[]) {
 
 	ksrc = new KinectImageSource();
-	win = new GLUTWindow(1280,1024,"gldemo");
+	win = new GLUTWindow(800,600,"gldemo");
 
 	glutDisplayFunc( display );
   glutKeyboardFunc(key);
