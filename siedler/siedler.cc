@@ -41,6 +41,7 @@ class MyButton: public Button {
 			lbl = new Label(label,50,50,x+40,y+25,0,1,0,NULL);
 			lbl->color(0,0,0,1);
 			l_angle = 0;
+			text = label;
 		}
 
 		void init() { parent->add(lbl); }
@@ -51,11 +52,12 @@ class MyButton: public Button {
 			Button::draw();
 		}
 
-		void tap( Vector pos, int id ) { lbl->set( "42%" ); lbl->texture( white ); }
+		void tap( Vector pos, int id ) { lbl->set( text ); lbl->texture( white ); }
 		void release( ) { lbl->set( "" ); lbl->texture(NULL); }
 
 		Label* lbl;
 		double l_angle;
+		const char* text;
 };
 
 int main( int argc, char* argv[] ) {
@@ -70,14 +72,17 @@ int main( int argc, char* argv[] ) {
 	empty = new RGBATexture("empty.png");
 	white = new RGBATexture("white.png");
 
-	MyButton* btn1 = new MyButton(   0,-33.5 ); win->add( btn1 ); btn1->init();
-	MyButton* btn2 = new MyButton(   0, 33.5 ); win->add( btn2 ); btn2->init();
+	int dx = -29;
+	int dy = 35;
 
-	MyButton* btn3 = new MyButton(  29,-17.5 ); win->add( btn3 ); btn3->init();
-	MyButton* btn4 = new MyButton(  29, 17.5 ); win->add( btn4 ); btn4->init();
+	MyButton* btn1 = new MyButton(   0+dx,-33.5+dy, "25%" ); win->add( btn1 ); btn1->init();
+	MyButton* btn2 = new MyButton(   0+dx, 33.5+dy, "28%" ); win->add( btn2 ); btn2->init();
 
-	MyButton* btn5 = new MyButton( -29,-17.5 ); win->add( btn5 ); btn5->init();
-	MyButton* btn6 = new MyButton( -29, 17.5 ); win->add( btn6 ); btn6->init();
+	MyButton* btn3 = new MyButton(  29+dx,-17.5+dy, "17%" ); win->add( btn3 ); btn3->init();
+	MyButton* btn4 = new MyButton(  29+dx, 17.5+dy, "22%" ); win->add( btn4 ); btn4->init();
+
+	MyButton* btn5 = new MyButton( -29+dx,-17.5+dy, "33%" ); win->add( btn5 ); btn5->init();
+	MyButton* btn6 = new MyButton( -29+dx, 17.5+dy, "33%" ); win->add( btn6 ); btn6->init();
 
 	win->update();
 	win->run();
