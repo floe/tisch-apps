@@ -27,7 +27,7 @@ RGBATexture* numbers[13];
 RGBATexture* number = NULL;
 std::deque<int> rolls;
 
-bool shownum = false;
+bool shownum = true;
 
 IntensityImage mask(640,480);
 
@@ -35,7 +35,7 @@ Image* disp = &rgb;
 
 std::vector<Blob> blobs;
 
-int thr = 180;
+int thr = 230;
 
 int curframe = 0;
 int lasttime = 0;
@@ -114,7 +114,7 @@ void display() {
 	for (int i = 0; i < 640*480; i++) if (maskdata[i] == 255) try {
 
 		// try to create a new blob. throws if blob too small, continues silently.
-		blobs.push_back( Blob( &mask, Point(i%640,i/640), value, gid, 300, 700) );
+		blobs.push_back( Blob( &mask, Point(i%640,i/640), value, gid, 200, 800) );
 
 		// adjust counters
 		value--;
@@ -176,7 +176,7 @@ void display() {
 
 		// find blobs ~ 50 px
 		for (int i = 0; i < 50*50; i++) if (dicedata[i] == 255) try {
-			eyes.push_back( Blob( &diceimg, Point(i%50,i/50), eyeval, eyegid, 10, 30) );
+			eyes.push_back( Blob( &diceimg, Point(i%50,i/50), eyeval, eyegid, 5, 30) );
 			value--; gid++;
 		} catch (...) { }
 
@@ -202,7 +202,7 @@ void display() {
 	if ((firstsum >= 2) && (firstsum <= 12))
 		number = numbers[firstsum];
 	else
-		number = NULL;
+		number = numbers[0];
 
 	if (number) {
 		number->bind();
@@ -249,6 +249,7 @@ int main(int argc, char* argv[]) {
 	ksrc = new KinectImageSource();
 	win = new GLUTWindow(800,600,"gldemo");
 
+	numbers[0] = new RGBATexture("siedler.png");
 	for (int i = 2; i <= 12; i++) {
 		char namebuf[100];
 		snprintf(namebuf,100,"siedler%02d.png",i);
