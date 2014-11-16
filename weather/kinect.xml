@@ -6,7 +6,7 @@
 				<BGSubFilter BGSubFilterID="0" Invert="0" Adaptive="0">
 					<ThreshFilter LowerThreshold="2" UpperThreshold="6">
 						<SpeckleFilter NoiseLevel="6">
-							<BlobFilter IgnoreOrphans="1" MinSize="65" MaxSize="300" PeakMode="-1" HFlip="0" VFlip="1" Type="1" TrackRadiusZ="20" PeakFactor="1" />
+							<BlobList IgnoreOrphans="1" MinSize="65" MaxSize="300" PeakMode="-1" HFlip="0" VFlip="1" Type="1" TrackRadiusZ="20" PeakFactor="1" />
 						</SpeckleFilter>
 					</ThreshFilter>
 				</BGSubFilter>
