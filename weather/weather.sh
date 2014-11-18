@@ -1,12 +1,12 @@
 #!/bin/bash
 
 export DISPLAY=:0.0
-export LD_LIBRARY_PATH=$(pwd)/../../libtisch-3.0/build/lib/
+export LD_LIBRARY_PATH=$(pwd)/../../tisch-core.git/build/lib/
 
-cd ../../libtisch-3.0/build/bin/
-./touchd -V -c ../../../applets/weather/kinect.xml > /dev/null & disown
+cd ../../tisch-core.git/build/bin/
+./touchd -V -c ../../../tisch-apps.git/weather/kinect.xml > /dev/null & disown
 sleep 10
 ./calibd & disown
 
-cd ../../../applets/weather
+cd ../../../tisch-apps.git/weather
 ./weather weather2.png weather3.png weather1.png 
