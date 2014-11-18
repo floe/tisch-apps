@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<libTISCH version="2.0">
+	<Filter>
+		<Camera SourceType="5" SourcePath="/dev/video0" UseIntensityImage="0" Width="640" Height="480" FPS="30" Verbose="0" FlashMode="1" FlashPath="" Gain="1" Exposure="1" Brightness="1">
+			<FlipFilter HFlip="0" VFlip="0">
+				<BGSubFilter BGSubFilterID="0" Invert="0" Adaptive="0">
+					<ThreshFilter LowerThreshold="2" UpperThreshold="8">
+						<SpeckleFilter NoiseLevel="6">
+							<BlobList IgnoreOrphans="0" MinSize="5000" MaxSize="20000" PeakMode="-1" HFlip="0" VFlip="1" Type="21" TrackRadiusZ="20" PeakFactor="1" />
+							<BlobList IgnoreOrphans="0" MinSize="65" MaxSize="300" PeakMode="-1" HFlip="0" VFlip="1" Type="1" TrackRadiusZ="20" PeakFactor="1" />
+						</SpeckleFilter>
+					</ThreshFilter>
+				</BGSubFilter>
+			</FlipFilter>
+		</Camera>
+	</Filter>
+</libTISCH>
