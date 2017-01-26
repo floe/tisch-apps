@@ -328,7 +328,7 @@ int main( int argc, char* argv[] ) {
 		if (std::string(argv[opt]) == "-p") mopho = 1;
 	}
 
-	SudokuWindow* win = new SudokuWindow( 640, 480, "Sudoku", mouse );
+	SudokuWindow* win = new SudokuWindow( 800, 480, "Sudoku", mouse );
 
 	// load the textures
 	for (int i = 0; i < 9; i++) {
@@ -352,7 +352,7 @@ int main( int argc, char* argv[] ) {
 		for (int j = 0; j < SQUARE; j++) {
 			int fac = (mopho ? 1 : (j%2)*2-1 );
 			int y = (int)(((double)random()/(double)RAND_MAX)*400-200);
-			int x = (int)((((double)random()/(double)RAND_MAX)*100+200)) * fac;
+			int x = (int)((((double)random()/(double)RAND_MAX)*150+200)) * fac;
 			tiles[i][j] = new SudokuTile( texids[i][0], tilesize, tilesize, x, y );
 			// -fieldwidth+slotsize*(i+0.5), -fieldwidth+slotsize*(j+0.5) ); 
 			win->add(tiles[i][j]);
