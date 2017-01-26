@@ -72,8 +72,8 @@ class DinnerTracker: public Window {
 			for (std::map<int,Vector>::iterator shadow = shadows.begin(); shadow != shadows.end(); shadow++) {
 				//std::cout << "drawing blob: " << shadow->first << " " << shadow->second << std::endl;
 				glPushMatrix( );
-				glTranslatef( shadow->second[0]+(tex->width()/2), shadow->second[1], 0 );
-				glScalef(0.5,0.5,1);
+				glTranslatef( shadow->second[0]+(tex->width()/2)+50, shadow->second[1]+50, 0 );
+				glScalef(0.5,0.7,1);
 				paint_tex(tex);
 				glPopMatrix( );
 			}
