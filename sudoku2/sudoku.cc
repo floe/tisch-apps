@@ -62,17 +62,18 @@ class SudokuWindow: public Window {
 				grid[i][j][1] = -fieldwidth+slotsize*(j+0.5);
 			}
 
-			std::vector<int> bounds; bounds.push_back( -1 );
-			BlobID* gone = new BlobID(1<<INPUT_TYPE_SHADOW);
-			gone->bounds( bounds );
+			/*
+			BlobID* gone = new BlobID(1<<INPUT_TYPE_HAND);
+			gone->bounds().push_back(-1);
 			Gesture vanish( "vanish" );
 			vanish.push_back( gone );
 			region.gestures.push_back(vanish);
 
 			Gesture move( "move" );
-			move.push_back( new BlobID(1<<INPUT_TYPE_SHADOW) );
-			move.push_back( new BlobPos(1<<INPUT_TYPE_SHADOW) );
+			move.push_back( new BlobID(1<<INPUT_TYPE_HAND) );
+			move.push_back( new BlobPos(1<<INPUT_TYPE_HAND) );
 			region.gestures.push_back( move );
+			*/
 
 			//region.flags(  );
 			mycolor[0] = 0.0;
@@ -80,6 +81,7 @@ class SudokuWindow: public Window {
 			mycolor[2] = 0.0;
 		}
 
+		/*
 		void action( Gesture* gesture ) {
 
 			if (gesture->name() == "move" ) {
@@ -101,6 +103,7 @@ class SudokuWindow: public Window {
 			}
 
 		}
+		*/
 
 		virtual void draw() {
 
@@ -115,7 +118,7 @@ class SudokuWindow: public Window {
 
 			glTranslatef(0,0,0.1);
 			for (int i = 0; i < 10; i++) {
-				if ((i % 3) == 0) glLineWidth(3.0);
+				if ((i % 3) == 0) glLineWidth(5.0);
 				vertices[0] = GLvector( -fieldwidth+slotsize*i, -fieldwidth );
 				vertices[1] = GLvector( -fieldwidth+slotsize*i,  fieldwidth );
 				vertices[2] = GLvector(  fieldwidth, -fieldwidth+slotsize*i );
